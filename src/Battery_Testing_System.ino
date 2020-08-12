@@ -125,6 +125,11 @@ float BMSchargeVoltSetpoint = 0;
 
 unsigned int BMSstatusWord = 0;
 
+int InvntsSystemState;
+int InvntsDischrgEnabled;
+int InvntsInterlockDetected;
+int InvntsSOH = 0;
+
 extern String testState2String;
 
 #define OS_10MS_MASK    0x0001

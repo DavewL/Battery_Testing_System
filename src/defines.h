@@ -11,6 +11,7 @@
 #define CHARGE 0
 #define DISCHARGE 1
 #define FAULT 2
+#define STANDBY 3
 
 //VAL. BMS STATUS FLAG DEFINITIONS
 #define NORMAL    0x00

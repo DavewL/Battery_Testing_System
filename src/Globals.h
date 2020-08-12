@@ -105,3 +105,5 @@ extern unsigned int BMSstatusWord;
 extern int InvntsSystemState;
 extern int InvntsDischrgEnabled;
 extern int InvntsInterlockDetected;
+
+extern int InvntsSOH;
