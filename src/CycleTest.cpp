@@ -100,14 +100,19 @@ void initCycleTest(void){
   Particle.variable("CellMaxTemp", battMaxTemp2String);
   Particle.variable("CellDeltaV", cellsDeltaV2String);
 
+  
   pinMode(CHARGE_EN, OUTPUT);
   pinMode(IGN, OUTPUT);
   if (battType == VALENCE_REV3){
     pinMode(HEATER, OUTPUT);
   }
-  else{
+  else if (battType == CUMMINS_REV1){
     pinMode(BRAMMO_INTRLK, OUTPUT);
   }
+  else if (battType == INVNTS_80AH){
+    pinMode(INVNTS_DISCHRG, OUTPUT);
+  }
+
   testState = stateINIT;
 
   testSubCycleCount = 0;
@@ -165,7 +170,13 @@ void CycleTest(void){
       flagSDPause = 1;
       DQchargerEnable = 1;
 
-      IC1200Enable = 0;
+      if (battType == INVNTS_80AH){
+        IC1200Enable = 1;
+      }
+      else {
+        IC1200Enable = 0;
+      }
+      
       setIC1200Current = 0;
       setIC1200Voltage = 0;
 
@@ -208,9 +219,12 @@ void CycleTest(void){
       break;
 
     case statePOWERRESETCHRGON:   //3
-      IC1200Enable = 0;
-      setIC1200Current = 0;
-      setIC1200Voltage = 0;
+      if (battType != INVNTS_80AH){
+        IC1200Enable = 0;
+        setIC1200Current = 0;
+        setIC1200Voltage = 0;
+      }
+      
 
       if (battType == VALENCE_REV3){
         if (BMSrev3CANok()){
@@ -362,9 +376,11 @@ void CycleTest(void){
       break;
 
     case stateCHARGEENABLE:       //9
-      IC1200Enable = 0;
-      setIC1200Current = 0;
-      setIC1200Voltage = 0;
+      if (battType != INVNTS_80AH){
+        IC1200Enable = 0;
+        setIC1200Current = 0;
+        setIC1200Voltage = 0;
+      }
 
       if(battType == VALENCE_REV3){
         if (BMSrev3CANok()){
@@ -402,6 +418,13 @@ void CycleTest(void){
         }
         else{
           testState = stateERRORHALT;
+        }
+      }
+      else if (battType == INVNTS_80AH){
+        if (Invnts80AhCANok()){
+          if (moduleSOCscale < 100.0){
+
+          }
         }
       }
       break;
@@ -519,6 +542,10 @@ void CycleTest(void){
   }
   if (DQfixedVoltOverride == 1){
     setDQVoltage = fixedOverRideVolt;
+  }
+  if (battType == INVNTS_80AH){
+    setIC1200Voltage = setDQVoltage;
+    setIC1200Current = setDQCurrent;
   }
 
   //----------------------------   MANAGE HEATER STATE MACHINE   ----------------------------------------------------//
@@ -717,13 +744,13 @@ int okToDischarge(void){
   if (underTempDischargeStatus > ALARM){
     return 2;
   }
-  else if (overTemperatureStatus > ALARM){
+  else if ((overTemperatureStatus > ALARM) && (overTempDischargeStatus > ALARM)){
     return 3;
   }
-  else if (PCBAoverTempStatus > ALARM){
+  else if ((PCBAoverTempStatus > ALARM) && (shortCircuitStatus > ALARM)){
     return 4;
   }
-  else if (battTerminalOverTempStatus > ALARM){
+  else if ((battTerminalOverTempStatus > ALARM) && (otherDischargeFaultStatus > ALARM)){
     return 5;
   }
   else if (overVoltageStatus > ALARM){
@@ -735,7 +762,7 @@ int okToDischarge(void){
   else if (overCurrentDischarge > ALARM){
     return 8;
   }
-  else if (cellDeltaTempStatus > ALARM){
+  else if ((cellDeltaTempStatus > ALARM) && (internalCommStatus > ALARM)){
     return 9;
   }
   else if (ModuleLostState > ALARM){
@@ -775,10 +802,10 @@ int okToCharge(void){
   else if (overTemperatureStatus > ALARM){
     return 3;
   }
-  else if (PCBAoverTempStatus > ALARM){
+  else if ((PCBAoverTempStatus > ALARM) && (shortCircuitStatus > ALARM)){
     return 4;
   }
-  else if (battTerminalOverTempStatus > ALARM){
+  else if ((battTerminalOverTempStatus > ALARM) && (otherChargeFaultStatus > ALARM)){
     return 5;
   }
   else if (overVoltageStatus > ALARM){
@@ -787,7 +814,7 @@ int okToCharge(void){
   else if (overCurrentCharge > ALARM){
     return 7;
   }
-  else if (cellDeltaTempStatus > ALARM){
+  else if ((cellDeltaTempStatus > ALARM) && (internalCommStatus > ALARM)){
     return 8;
   }
   else if (ModuleLostState > ALARM){
@@ -864,10 +891,10 @@ void manageHeaterEnabled(void){
     }
   }
   if (battType == INVNTS_80AH){
-    if (moduleMinTemperature <= CHARGE_MIN_TEMP){
+    if (moduleMinTemperature <= CHRGR_PWR_HEATER_ON_CELL_TEMP){
       turnHeaterOn();
     }
-    else if (moduleMinTemperature > CHARGE_MIN_TEMP_OFF){
+    else if (moduleMinTemperature > CHRGR_PWR_HEATER_OFF_CELL_TEMP){
       turnHeaterOff();
     }
   }

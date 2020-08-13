@@ -107,3 +107,10 @@ extern int InvntsDischrgEnabled;
 extern int InvntsInterlockDetected;
 
 extern int InvntsSOH;
+
+extern int overTempChargeStatus;
+extern int otherChargeFaultStatus;
+extern int overTempDischargeStatus;
+extern int otherDischargeFaultStatus;
+extern int shortCircuitStatus;
+extern int internalCommStatus;

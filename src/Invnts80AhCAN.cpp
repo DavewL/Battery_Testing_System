@@ -17,7 +17,7 @@ void ResetInvntsTimer(INVNTS_TIMERS eCANTimer);
 
 
 void initInvnts80AhCAN(void){
-  unsigned int wIndex;
+  unsigned int wIndex;  
   for (wIndex = 0; wIndex < ((unsigned int)NUM_INVNTS_TIMERS); wIndex++){
    RegisterTimer(&scastInvntsTimers[wIndex]);
    ResetInvntsTimer((INVNTS_TIMERS)wIndex);
@@ -56,6 +56,33 @@ void recInvntsStatus(CANMessage message){
       }
     }
     if (((message.data[1]) == INVNTS_MUX_3) && (message.data[0] == 1)){  //data[0] is module number
+      /* -- charge faults ------------------------------------------------*/
+      overTempChargeStatus = ((message.data[2]&0x01))*3;        //0000 0001
+      underTempChargeStatus = ((message.data[2]&0x02) >> 1)*3;  //0000 0010
+      overCurrentCharge = ((message.data[2]&0x04) >> 2)*3;      //0000 0100
+      overVoltageStatus = ((message.data[2]&0x08) >> 3)*3;      //0000 1000
+      shortCircuitStatus = ((message.data[2]&0x016) >> 4)*3;    //0001 0000
+      otherChargeFaultStatus = ((message.data[2]&0x032) >> 5)*3;//0010 0000
+
+      ModuleLostState = ((message.data[3]&0x016) >> 4)*3;       //0001 0000
+      internalCommStatus = ((message.data[3]&0x032) >> 5)*3;    //0010 0000
+
+      /* -- discharge faults ---------------------------------------------*/
+      overTempDischargeStatus = ((message.data[4]&0x01))*3;           //0000 0001
+      underTempDischargeStatus = ((message.data[4]&0x02) >> 1)*3;     //0000 0010
+      overCurrentDischarge = ((message.data[4]&0x04) >> 2)*3;         //0000 0100
+      underVoltageStatus = ((message.data[4]&0x08) >> 3)*3;           //0000 1000
+      if (shortCircuitStatus == 0){
+        shortCircuitStatus = ((message.data[4]&0x016) >> 4)*3;        //0001 0000
+      }
+      otherDischargeFaultStatus = ((message.data[4]&0x032) >> 5)*3;   //0010 0000
+      if (ModuleLostState == 0){
+        ModuleLostState = ((message.data[5]&0x16) >> 4)*3;            //0001 0000
+      }
+      if (internalCommStatus){
+        internalCommStatus = ((message.data[5]&0x032) >> 5)*3;        //0010 0000
+      }
+      
       moduleMaxTemperature = ((float)((int16_t)((message.data[7]<<8)|(message.data[6]<<0)))/10)-273.15;
       moduleMinTemperature = moduleMaxTemperature;
     }

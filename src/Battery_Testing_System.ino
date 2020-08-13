@@ -130,6 +130,14 @@ int InvntsDischrgEnabled;
 int InvntsInterlockDetected;
 int InvntsSOH = 0;
 
+
+int overTempChargeStatus = 4;
+int otherChargeFaultStatus = 4;
+int overTempDischargeStatus = 4;
+int otherDischargeFaultStatus = 4;
+int shortCircuitStatus = 4;
+int internalCommStatus = 4;
+
 extern String testState2String;
 
 #define OS_10MS_MASK    0x0001
