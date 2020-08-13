@@ -4,9 +4,11 @@
 #include "Globals.h"
 #include "TickTimer.h"
 
+extern Carloop<CarloopRevision2> carloop;
+
 static const unsigned int scawInvntsTimers[NUM_INVNTS_TIMERS] =
 {
-  /* CT_INVNTS_LOST_DELAY   */   1000,  //ms -delay before INVNTS CAN is assumed lost
+  /* CT_INVNTS_LOST_DELAY   */   2000,  //ms -delay before INVNTS CAN is assumed lost
 };
 
 static TICK_TIMER_S scastInvntsTimers[NUM_INVNTS_TIMERS];
@@ -32,13 +34,13 @@ void recInvntsStatus(CANMessage message){
   if (message.id == INVNTS_TPDO3_ID){
     ResetInvntsTimer(CT_INVNTS_LOST_DELAY);
     nowMillis = millis();
-    if (((message.data[1]) == INVNTS_MUX_1) && (message.data[0] == 0)){  //data[0] is module number
+    if (((message.data[1]) == INVNTS_MUX_1) && (message.data[0] == 1)){  //data[0] is module number
       moduleSOCscale = (float)message.data[2];  //SOC %
       InvntsSOH = (int)message.data[3];
       maxDischargeCurrent = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))/100;
       BMSchargeCurrSetpoint = (float)((uint16_t)((message.data[7]<<8)|(message.data[6]<<0)))/100;
     }
-    if (((message.data[1]) == INVNTS_MUX_2) && (message.data[0] == 0)){  //data[0] is module number
+    if (((message.data[1]) == INVNTS_MUX_2) && (message.data[0] == 1)){  //data[0] is module number
       maxRegenCurrent = (float)((uint16_t)((message.data[3]<<8)|(message.data[2]<<0)))/100;
       if (message.data[4] == 5){
         BMSstatus = DISCHARGE;
@@ -53,12 +55,12 @@ void recInvntsStatus(CANMessage message){
         BMSstatus = STANDBY;
       }
     }
-    if (((message.data[1]) == INVNTS_MUX_3) && (message.data[0] == 0)){  //data[0] is module number
+    if (((message.data[1]) == INVNTS_MUX_3) && (message.data[0] == 1)){  //data[0] is module number
       moduleMaxTemperature = ((float)((int16_t)((message.data[7]<<8)|(message.data[6]<<0)))/10)-273.15;
       moduleMinTemperature = moduleMaxTemperature;
     }
   }
-  if (message.id == INVNTS_CELL_VOLTS_ID){
+  else if (message.id == INVNTS_CELL_VOLTS_ID){
     ResetInvntsTimer(CT_INVNTS_LOST_DELAY);
     nowMillis = millis();
     if (message.data[3] == CELL_1_MUX){
@@ -86,6 +88,30 @@ void recInvntsStatus(CANMessage message){
       battCell8mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
     }
   }
+  else if (message.id == INVNTS_SDO_RESP_ID){
+    ResetInvntsTimer(CT_INVNTS_LOST_DELAY);
+    nowMillis = millis();
+    if ((message.data[0] == 0x4B)&&(message.data[1]==0x01)&&(message.data[2]==0xC1)){
+      if (message.data[3] == INVNTS_VOLTS_SUBINDEX){
+        battVoltage = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))/1000; //voltage
+      }
+      else if (message.data[3]== INVNTS_CURRENT_SUBINDEX){
+        battCurrent = (float)((int16_t)((message.data[3]<<8)|(message.data[2]<<0)))/100;  //current
+        if (battVoltage > 0){
+          deltaMillis = nowMillis - prevMillis;
+          prevMillis = nowMillis;
+          tempAmpSeconds = battCurrent * ((float)deltaMillis/1000);
+          ampHours = ampHours + (tempAmpSeconds/3600);
+          tempWattSeconds = battVoltage * tempAmpSeconds;
+          //cumlAmpHrs = cumlAmpHrs + ampHours;
+          wattHours = wattHours + (tempWattSeconds/3600);
+        } 
+      }
+      else if (message.data[3]==INVNTS_HEATER_STATUS_SUBINDEX){
+
+      }
+    }
+  }
 }
 
 int Invnts80AhCANok(void){
@@ -105,28 +131,27 @@ void ResetInvntsTimer(INVNTS_TIMERS eCANTimer)
   }
 }
 
-int InvntsReqModVolts(void){
+void InvntsSDOReadReq(int sub_index){
+  CANMessage message;
+  message.id = 0x631;
+  message.len = 4;
+  message.data[0] = 0x40;
+  message.data[1] = 0x01;  //pack number
+  message.data[2] = 0xC1;
+  message.data[3] = sub_index;
 
+  carloop.can().transmit(message);
 }
-int InvntsReqModCurrent(void){
 
+void InvntsSDOWriteReq(int sub_index, int wr_data){
+  CANMessage message;
+  message.id = 0x631;
+  message.len = 4;
+  message.data[0] = 0x2B;
+  message.data[1] = 0x01;  //pack number
+  message.data[2] = 0xC1;
+  message.data[3] = sub_index;
+  message.data[4] = (byte)(wr_data >> 0) & 0xFF;
+  message.data[5] = (byte)(wr_data >> 8) & 0xFF;
+  carloop.can().transmit(message);
 }
-int InvntsReqHeaterStatus(void){
-
-}
-battVoltage = (float)((uint16_t)((message.data[1]<<8)|(message.data[0]<<0)))/1000; //voltage
-    battCurrent = (float)((int16_t)((message.data[3]<<8)|(message.data[2]<<0)))/10;  //current
-    
-    moduleMaxTemperature = (int8_t)message.data[5];  //temperature
-    moduleMinTemperature = moduleMaxTemperature;
-    InvntsSystemState = (uint8_t)message.data[6];  //system state
-    InvntsDischrgEnabled =  message.data[7]&0x01; //SBX
-    DQwallPluggedIn = (message.data[7]>>1)&0x01;  //AC detected
-    InvntsInterlockDetected = (message.data[7]>>2)&0x01;  //interlock
-    deltaMillis = nowMillis - prevMillis;
-    prevMillis = nowMillis;
-    tempAmpSeconds = battCurrent * ((float)deltaMillis/1000);
-    ampHours = ampHours + (tempAmpSeconds/3600);
-    tempWattSeconds = battVoltage * tempAmpSeconds;
-    //cumlAmpHrs = cumlAmpHrs + ampHours;
-    wattHours = wattHours + (tempWattSeconds/3600);

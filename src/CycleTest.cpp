@@ -9,6 +9,7 @@
 #include "CANtx.h"
 #include "DeltaQ_CANopen.h"
 #include "CumminsCAN.h"
+#include "Invnts80AhCAN.h"
 
 static const unsigned int scawCycleTestTimers[NUM_CYCLE_TIMERS] =
 {
@@ -740,7 +741,7 @@ int okToDischarge(void){
   else if (ModuleLostState > ALARM){
     return 10;
   }
-  else if (BMSrev3CANok() != 1){
+  else if ((BMSrev3CANok() != 1)||(Invnts80AhCANok() != 1)){
     return 11;
   }
   else if (moduleMinTemperature <= DISCHARGE_MIN_TEMP){
@@ -792,7 +793,7 @@ int okToCharge(void){
   else if (ModuleLostState > ALARM){
     return 9;
   }
-  else if (BMSrev3CANok() != 1){
+  else if ((BMSrev3CANok() != 1)||(Invnts80AhCANok() != 1)){
     return 10;
   }
   else if (moduleMinTemperature <= CHARGE_MIN_TEMP){
@@ -836,12 +837,20 @@ void turnHeaterOn(void){
       heaterStatus = 0;
     }
   }
+  else if (battType == INVNTS_80AH){
+    InvntsSDOWriteReq(INVNTS_HEATER_CONTROL_SUBINDEX, 1);
+    //heaterStatus = 1;
+  }
 }
 
 void turnHeaterOff(void){
   if (battType == VALENCE_REV3){
     digitalWrite(HEATER, LOW);
     heaterStatus = 0;
+  }
+  if (battType == INVNTS_80AH){
+    InvntsSDOWriteReq(INVNTS_HEATER_CONTROL_SUBINDEX, 0);
+    //heaterStatus = 0;
   }
 }
 
@@ -851,6 +860,14 @@ void manageHeaterEnabled(void){
       turnHeaterOn();
     }
     else if (maxSurfTempReturned >= HEATER_OFF_SURFACE_TEMP){
+      turnHeaterOff();
+    }
+  }
+  if (battType == INVNTS_80AH){
+    if (moduleMinTemperature <= CHARGE_MIN_TEMP){
+      turnHeaterOn();
+    }
+    else if (moduleMinTemperature > CHARGE_MIN_TEMP_OFF){
       turnHeaterOff();
     }
   }

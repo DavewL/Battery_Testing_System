@@ -4,6 +4,8 @@
 
 #define INVNTS_TPDO3_ID 0x3B1
 #define INVNTS_CELL_VOLTS_ID 0x3B2
+#define INVNTS_SDO_RESP_ID 0x5B1
+
 #define INVNTS_MUX_1 0x01
 #define INVNTS_MUX_2 0x02
 #define INVNTS_MUX_3 0x03
@@ -17,6 +19,13 @@
 #define CELL_7_MUX 0x38
 #define CELL_8_MUX 0x39
 
+#define INVNTS_VOLTS_SUBINDEX 0x09
+#define INVNTS_CURRENT_SUBINDEX 0x0A
+#define INVNTS_AVG_CURRENT_SUBINDEX 0x0B
+#define INVNTS_SN_SUBINDEX 0x1C
+#define INVNTS_HEATER_STATUS_SUBINDEX 0x92
+
+
 typedef enum
 {
   CT_INVNTS_LOST_DELAY,
@@ -27,6 +36,5 @@ typedef enum
 void initInvntsCAN(void);
 void recInvntsStatus(CANMessage message);
 int Invnts80AhCANok(void);
-int InvntsReqModVolts(void);
-int InvntsReqModCurrent(void);
-int InvntsReqHeaterStatus(void);
+void InvntsSDOReadReq(int);
+void InvntsSDOWriteReq(int, int);

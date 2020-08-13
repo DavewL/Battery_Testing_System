@@ -65,3 +65,5 @@
 #define LIST (2)
 
 #define CAN_LOST_TIME 5 //seconds after which CANbus is consdidered lost
+
+#define INVNTS_HEATER_CONTROL_SUBINDEX 0x93
