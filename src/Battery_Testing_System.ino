@@ -129,6 +129,7 @@ int InvntsSystemState;
 int InvntsDischrgEnabled;
 int InvntsInterlockDetected;
 int InvntsSOH = 0;
+int InvntsHeaterStat = NA;
 
 
 int overTempChargeStatus = 4;

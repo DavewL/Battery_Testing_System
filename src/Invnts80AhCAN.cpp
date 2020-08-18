@@ -92,28 +92,77 @@ void recInvntsStatus(CANMessage message){
     nowMillis = millis();
     if (message.data[3] == CELL_1_MUX){
       battCell1mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
+      if (battCell1mv > moduleMaxMvolts) {
+        moduleMaxMvolts = battCell1mv;
+      }
+      if (battCell1mv < moduleMinMvolts){
+        moduleMinMvolts = battCell1mv;
+      }
     }
     else if (message.data[3] == CELL_2_MUX){
       battCell2mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
+      if (battCell2mv > moduleMaxMvolts) {
+        moduleMaxMvolts = battCell2mv;
+      }
+      if (battCell2mv < moduleMinMvolts){
+        moduleMinMvolts = battCell2mv;
+      }
     }
     else if (message.data[3] == CELL_3_MUX){
       battCell3mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
+      if (battCell3mv > moduleMaxMvolts) {
+        moduleMaxMvolts = battCell3mv;
+      }
+      if (battCell3mv < moduleMinMvolts){
+        moduleMinMvolts = battCell3mv;
+      }
     }
     else if (message.data[3] == CELL_4_MUX){
       battCell4mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
+      if (battCell4mv > moduleMaxMvolts) {
+        moduleMaxMvolts = battCell4mv;
+      }
+      if (battCell4mv < moduleMinMvolts){
+        moduleMinMvolts = battCell4mv;
+      }
     }
     else if (message.data[3] == CELL_5_MUX){
       battCell5mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
+      if (battCell5mv > moduleMaxMvolts) {
+        moduleMaxMvolts = battCell5mv;
+      }
+      if (battCell5mv < moduleMinMvolts){
+        moduleMinMvolts = battCell5mv;
+      }
     }
     else if (message.data[3] == CELL_6_MUX){
       battCell6mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
+      if (battCell6mv > moduleMaxMvolts) {
+        moduleMaxMvolts = battCell6mv;
+      }
+      if (battCell6mv < moduleMinMvolts){
+        moduleMinMvolts = battCell6mv;
+      }
     }
     else if (message.data[3] == CELL_7_MUX){
       battCell7mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
+      if (battCell7mv > moduleMaxMvolts) {
+        moduleMaxMvolts = battCell7mv;
+      }
+      if (battCell7mv < moduleMinMvolts){
+        moduleMinMvolts = battCell7mv;
+      }
     }
     else if (message.data[3] == CELL_8_MUX){
       battCell8mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
+      if (battCell8mv > moduleMaxMvolts) {
+        moduleMaxMvolts = battCell8mv;
+      }
+      if (battCell8mv < moduleMinMvolts){
+        moduleMinMvolts = battCell8mv;
+      }
     }
+    
   }
   else if (message.id == INVNTS_SDO_RESP_ID){
     ResetInvntsTimer(CT_INVNTS_LOST_DELAY);
@@ -123,7 +172,7 @@ void recInvntsStatus(CANMessage message){
         battVoltage = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))/1000; //voltage
       }
       else if (message.data[3]== INVNTS_CURRENT_SUBINDEX){
-        battCurrent = (float)((int16_t)((message.data[3]<<8)|(message.data[2]<<0)))/100;  //current
+        battCurrent = (float)((int16_t)((message.data[5]<<8)|(message.data[4]<<0)))/100;  //current
         if (battVoltage > 0){
           deltaMillis = nowMillis - prevMillis;
           prevMillis = nowMillis;
@@ -135,7 +184,15 @@ void recInvntsStatus(CANMessage message){
         } 
       }
       else if (message.data[3]==INVNTS_HEATER_STATUS_SUBINDEX){
-
+        InvntsHeaterStat = (uint8_t)message.data[4];
+      }
+      else if (message.data[3] == INVNTS_CHRG_STATUS_SUBINDEX){
+        if (message.data[4] == 32){
+          chargeStatus = COMPLETE;
+        }
+        else{
+          chargeStatus = MAIN;
+        }
       }
     }
   }

@@ -17,9 +17,10 @@ static const unsigned int scawCycleTestTimers[NUM_CYCLE_TIMERS] =
   /* CT_KEY_WAKE            */   9000,  //ms -TIME TO WAIT AFTER KEY ON SIGNAL
   /* CT_EL_LOAD_CMD_DELAY   */   200,   //ms -TIME TO WAIT BETWEEN COMMANDS TO THE EL. LOAD
   /* CT_MAIN_CNTCTR_DELAY   */   2000,  //ms -TIME LAG OF MAIN CONTACTOR STATE REPORTING ON CANBUS
-  /* CT_RECHARGE_DELAY      */   8000, //ms -MAX TIME TO WAIT AFTER POWERING ON CHARGER -CUMMINS ONLY
+  /* CT_RECHARGE_DELAY      */   8000,  //ms -MAX TIME TO WAIT AFTER POWERING ON CHARGER -CUMMINS ONLY
   /* CT_CUMMINS_CHRG_DELAY  */   6000,  //ms -MIN TIME TO WAIT AFTER POWERING ON CHARGER -CUMMINS ONLY -MUST BE SHORTER THAN CT_RECHARGE_DELAY
-  /* CT_LOG_INTERVAL        */   4000,   //ms -TIME TO WAIT BETWEEN COMMANDS TO THE EL. LOAD
+  /* CT_LOG_INTERVAL        */   4000,  //ms -TIME TO WAIT BETWEEN COMMANDS TO THE EL. LOAD
+  /* CT_INVNTS_CHRG_DELAY   */   1000   //ms - MIN TIME TO WAIT AFTER POWERING ON CHARGER -INVNTS ONLY -MUST BE SHORTER THAN CT_RECHARGE_DELAY
 };
 
 stateTestControl testState;
@@ -194,6 +195,11 @@ void CycleTest(void){
         digitalWrite(BRAMMO_INTRLK, LOW);
         rechargeOff();
       }
+      else if (battType == INVNTS_80AH){
+        heaterState = heaterDisabled;
+        digitalWrite(INVNTS_DISCHRG, LOW);
+        rechargeOff();
+      }
       initSerialElLoad();
       if (readFrameFileExists == 1){
         LogUserString("#CYCLES,#PH_CYCLES,#RECHARGE_CYCLES");
@@ -215,6 +221,10 @@ void CycleTest(void){
         digitalWrite(BRAMMO_INTRLK, LOW);
         rechargeOn();
       }
+      if (battType == INVNTS_80AH){
+        //heaterState = heaterDisabled;
+      }
+
       testState = statePOWERRESETCHRGON;
       break;
 
@@ -225,7 +235,6 @@ void CycleTest(void){
         setIC1200Voltage = 0;
       }
       
-
       if (battType == VALENCE_REV3){
         if (BMSrev3CANok()){
           if (moduleSOCscale < 100.0){
@@ -254,7 +263,6 @@ void CycleTest(void){
       }
       else if (battType == CUMMINS_REV1){
         if (TimerExpired(&scastCycleTimers[CT_CUMMINS_CHRG_DELAY])){
-          //if ((DQwallPluggedIn == 1)||(TimerExpired(&scastCycleTimers[CT_RECHARGE_DELAY]))){
           if (TimerRunning(&scastCycleTimers[CT_RECHARGE_DELAY])){
             if (DQwallPluggedIn == 1){
               if (moduleSOCscale < 100.0){
@@ -269,17 +277,32 @@ void CycleTest(void){
             testState = statePOWERRESETCHRGOFF;
           }
         }
-      /*  if (1){  //CumminsCANok()
-          if (moduleSOCscale < 100.0){//(DQwallPluggedIn == 1){
-            if //(DQwallPluggedIn == 1){
+      }
+      else if (battType == INVNTS_80AH){
+        if (Invnts80AhCANok()){
+          if (moduleSOCscale < 100.0){
+            if (okToCharge() == 1){     //ok to charge
               rechargeOn();
               testState = statePOWERRESET_CHARGE;  //start charging
             }
-            else ()
+            else if(okToCharge() == 11){ //too cold to charge yet
+              rechargeOff();
+              testState = statePOWERRESET_CHARGE;
+            }
+            else{
+              rechargeOff();
+              testState = stateERRORHALT; //something is wrong that prevents charging
+            }
           }
-          else{
-            testState = statePOWERRESETCHRGOFF;
-          }*/
+          else {
+            rechargeOff();
+            testState = stateSTARTDISCHARGE;
+          }
+        }
+        else {
+          rechargeOff();
+          testState = stateERRORHALT;
+        }
       }
       else{
         testState = stateERRORHALT;
@@ -307,6 +330,20 @@ void CycleTest(void){
           testState = statePOWERRESETCHRGOFF;
         }
       }
+      else if (battType == INVNTS_80AH){
+        if (chargeStatus==COMPLETE){ //(moduleSOCscale > 95.0)
+          testState = statePOWERRESETCHRGOFF;
+        }
+        else if (okToCharge() == 1){
+          rechargeOn();
+        }
+        else if (okToCharge() == 11){
+          rechargeOff();
+        }
+        else{
+          testState = stateERRORHALT;
+        }
+      }
       break;
 
     case statePOWERRESETCHRGOFF:  //5
@@ -320,6 +357,9 @@ void CycleTest(void){
       cumlWattHrs = 0;
       if (battType == CUMMINS_REV1){
         digitalWrite(BRAMMO_INTRLK, HIGH);
+      }
+      else if (battType == INVNTS_80AH){
+        digitalWrite(INVNTS_DISCHRG, HIGH);
       }
       if (dischargerType == SD_REPLAY){
         //configure discharger for replicating list read from SD card
@@ -355,10 +395,15 @@ void CycleTest(void){
           digitalWrite(BRAMMO_INTRLK, LOW);
           testState = stateDISCHARGE_INPUTOFF;
         }
-        //if (cumminsDischrgEnabled == 0){
-          //testState = stateDISCHARGE_INPUTOFF;
-        //}
       }
+      else if(battType == INVNTS_80AH){
+        //if ((okToDischarge() == 12)||(okToDischarge() == 2)){  
+        //  break;
+        //}
+        if (okToDischarge() != 1){
+          testState = stateDISCHARGE_INPUTOFF;
+        }
+      }  
       break;
 
     case stateDISCHARGE_INPUTOFF: //8
@@ -371,6 +416,10 @@ void CycleTest(void){
       }
       else if (battType == CUMMINS_REV1){
         digitalWrite(BRAMMO_INTRLK, LOW);
+        rechargeOn();
+      }
+      else if (battType == INVNTS_80AH){
+        digitalWrite(INVNTS_DISCHRG, LOW);
         rechargeOn();
       }
       break;
@@ -423,7 +472,22 @@ void CycleTest(void){
       else if (battType == INVNTS_80AH){
         if (Invnts80AhCANok()){
           if (moduleSOCscale < 100.0){
-
+            if (okToCharge() == 1){     //ok to charge
+              rechargeOn();
+              testState = stateCHARGE;  //start charging
+            }
+            else if(okToCharge() == 11){ //too cold to charge yet
+              rechargeOff();
+              testState = stateCHARGE;
+            }
+            else{
+              rechargeOff();
+              testState = stateERRORHALT; //something is wrong that prevents charging
+            }
+          }
+          else {
+            rechargeOff();
+            testState = stateSTARTDISCHARGE;
           }
         }
       }
@@ -448,6 +512,20 @@ void CycleTest(void){
       else if (battType==CUMMINS_REV1){
         if((moduleSOCscale==100.0)||(DQwallPluggedIn == 0)){
           testState = stateENDOFCHRG;
+        }
+      }
+      else if (battType == INVNTS_80AH){
+        if (chargeStatus==COMPLETE){ //(moduleSOCscale > 95.0)
+          testState = stateENDOFCHRG;
+        }
+        else if (okToCharge() == 1){
+          rechargeOn();
+        }
+        else if (okToCharge() == 11){
+          rechargeOff();
+        }
+        else{
+          testState = stateERRORHALT;
         }
       }
       break;
@@ -504,7 +582,7 @@ void CycleTest(void){
   DQcurrentSetpoint = 0.0;
 
   if (heaterStatus == 1){
-    DQcurrentSetpoint += 7;
+    DQcurrentSetpoint += 2; //7
   }
 
   if (0){  //set dq current setpoint based on cell voltage and temps

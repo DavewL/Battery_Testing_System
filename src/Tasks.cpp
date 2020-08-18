@@ -13,7 +13,7 @@
 #include "DeltaQ_CANopen.h"
 #include "defines.h"
 #include "Network.h"
-
+#include "Invnts80AhCAN.h"
 
 int OneSecCounter = 0; //used to run a 1 second timer
 int TwoSecCounter = 0;
@@ -124,6 +124,12 @@ void Tasks160ms(){
     transmitIC1200VoltsAmps();
     if(battType==VALENCE_REV3){
       transmitRPDO1();
+    }
+    else if (battType == INVNTS_80AH){
+      InvntsSDOReadReq(INVNTS_VOLTS_SUBINDEX);
+      InvntsSDOReadReq(INVNTS_CURRENT_SUBINDEX);
+      InvntsSDOReadReq(INVNTS_CHRG_STATUS_SUBINDEX);
+      InvntsSDOReadReq(INVNTS_HEATER_STATUS_SUBINDEX);
     }
   }
 }

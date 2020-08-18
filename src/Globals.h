@@ -114,3 +114,5 @@ extern int overTempDischargeStatus;
 extern int otherDischargeFaultStatus;
 extern int shortCircuitStatus;
 extern int internalCommStatus;
+
+extern int InvntsHeaterStat;

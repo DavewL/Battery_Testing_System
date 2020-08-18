@@ -4,7 +4,7 @@ const int CHARGE_EN = D3;  //enables charging and opens discharge contactor
 const int IGN = D4;       //enables the ignition line on BMS (used for reseting alarm(s) after discharge cycle)
 const int HEATER = D5;  //enables the heater relay
 const int BRAMMO_INTRLK = D5;   //enables dischange of the Cummins-Brammo Battery
-const int INVNTS_DISCHRG = D5;  //enables discharge of the Invntus battery
+const int INVNTS_DISCHRG = D4;  //enables discharge of the Invntus battery
 
 typedef enum
 {
@@ -15,6 +15,7 @@ typedef enum
   CT_RECHARGE_DELAY,
   CT_CUMMINS_CHRG_DELAY,
   CT_LOG_INTERVAL,
+  CT_INVNTS_CHRG_DELAY,
   NUM_CYCLE_TIMERS,
   FIRST_CYCLE_TIMER = 0
 } CYCLE_TIMERS;
