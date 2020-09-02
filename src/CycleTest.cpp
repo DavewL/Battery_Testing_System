@@ -50,6 +50,8 @@ String ok2ChargeStatus;
 String heaterState2String = "heaterOFF";
 String heaterStatus2String;
 String cellsDeltaV2String;
+String cellMinVoltsString;
+String cellMaxVoltsString;
 
 float maxSurfTempReturned = -99;
 
@@ -99,7 +101,9 @@ void initCycleTest(void){
   Particle.variable("SOC", battSOC2String);
   Particle.variable("CellMinTemp", battMinTemp2String);
   Particle.variable("CellMaxTemp", battMaxTemp2String);
-  Particle.variable("CellDeltaV", cellsDeltaV2String);
+  //Particle.variable("CellDeltaV", cellsDeltaV2String);
+  Particle.variable("CellMinVolts", cellMinVoltsString);
+  Particle.variable("CellMaxVolts", cellMaxVoltsString);
 
   
   pinMode(CHARGE_EN, OUTPUT);
@@ -125,10 +129,12 @@ void CycleTest(void){
   testState2String = stateStrings[testState]; //set the exposed particle variable to the test state string
   heaterState2String = heaterStateStrings[heaterState]; //set the exposed particle variable to the heater state string
   //float fCellsDeltaV = (float)(cellsDeltaV/1000);
-  cellsDeltaV2String = String::format("%d",cellsDeltaV);
+  //cellsDeltaV2String = String::format("%d",cellsDeltaV);
+  cellMinVoltsString = String::format("%d", moduleMinMvolts);
+  cellMaxVoltsString = String::format("%d", moduleMaxMvolts);
   battMaxTemp2String = String::format("%d", moduleMaxTemperature);
   battMinTemp2String = String::format("%d", moduleMinTemperature);
-  cellsDeltaV = moduleMaxMvolts - moduleMinMvolts;
+  //cellsDeltaV = moduleMaxMvolts - moduleMinMvolts;
   battSOC2String = String::format("%.2f", moduleSOCscale);
   battVolt2String = String::format("%.3f", battVoltage);
   battCurr2String = String::format("%.1f", battCurrent);
@@ -171,13 +177,7 @@ void CycleTest(void){
       flagSDPause = 1;
       DQchargerEnable = 1;
 
-      if (battType == INVNTS_80AH){
-        IC1200Enable = 1;
-      }
-      else {
-        IC1200Enable = 0;
-      }
-      
+      IC1200Enable = 0;
       setIC1200Current = 0;
       setIC1200Voltage = 0;
 
@@ -197,7 +197,8 @@ void CycleTest(void){
       }
       else if (battType == INVNTS_80AH){
         heaterState = heaterDisabled;
-        digitalWrite(INVNTS_DISCHRG, LOW);
+        digitalWrite(INVNTS_DISCHRG, HIGH);
+        digitalWrite(CHARGE_EN, HIGH);
         rechargeOff();
       }
       initSerialElLoad();
@@ -234,10 +235,16 @@ void CycleTest(void){
         setIC1200Current = 0;
         setIC1200Voltage = 0;
       }
-      
+      else{
+        if (InvntsCANRec == 0){
+          break;
+        }
+      }
+
+      //Serial.println(okToCharge());
       if (battType == VALENCE_REV3){
         if (BMSrev3CANok()){
-          if (moduleSOCscale < 100.0){
+          if (moduleSOCscale < maxChargePercent){
             if (okToCharge() == 1){     //ok to charge
               rechargeOn();
               testState = statePOWERRESET_CHARGE;  //start charging
@@ -265,7 +272,7 @@ void CycleTest(void){
         if (TimerExpired(&scastCycleTimers[CT_CUMMINS_CHRG_DELAY])){
           if (TimerRunning(&scastCycleTimers[CT_RECHARGE_DELAY])){
             if (DQwallPluggedIn == 1){
-              if (moduleSOCscale < 100.0){
+              if (moduleSOCscale < maxChargePercent){
                 testState = statePOWERRESET_CHARGE;
               }
               else{
@@ -280,7 +287,7 @@ void CycleTest(void){
       }
       else if (battType == INVNTS_80AH){
         if (Invnts80AhCANok()){
-          if (moduleSOCscale < 100.0){
+          if (moduleSOCscale < maxChargePercent){
             if (okToCharge() == 1){     //ok to charge
               rechargeOn();
               testState = statePOWERRESET_CHARGE;  //start charging
@@ -289,6 +296,7 @@ void CycleTest(void){
               rechargeOff();
               testState = statePOWERRESET_CHARGE;
             }
+
             else{
               rechargeOff();
               testState = stateERRORHALT; //something is wrong that prevents charging
@@ -331,7 +339,7 @@ void CycleTest(void){
         }
       }
       else if (battType == INVNTS_80AH){
-        if (chargeStatus==COMPLETE){ //(moduleSOCscale > 95.0)
+        if (moduleSOCscale >= maxChargePercent){
           testState = statePOWERRESETCHRGOFF;
         }
         else if (okToCharge() == 1){
@@ -347,24 +355,23 @@ void CycleTest(void){
       break;
 
     case statePOWERRESETCHRGOFF:  //5
-      flagSDPause = 1;
+      flagSDPause = 0;
       rechargeOff();
       testState = stateSTARTDISCHARGE;
+      if (battType == INVNTS_80AH){
+        if (okToDischarge() == 15){
+          testState = statePOWERRESETCHRGOFF;
+        }
+      }
       break;
 
     case stateSTARTDISCHARGE:     //6
       cumlAmpHrs = 0;
       cumlWattHrs = 0;
-      if (battType == CUMMINS_REV1){
-        digitalWrite(BRAMMO_INTRLK, HIGH);
-      }
-      else if (battType == INVNTS_80AH){
-        digitalWrite(INVNTS_DISCHRG, HIGH);
-      }
       if (dischargerType == SD_REPLAY){
         //configure discharger for replicating list read from SD card
         RestartFrameFileLines();
-        testSubCycleCount = 0;
+        testSubCycleCount = 1;
         setElLoad2PwrMode();
         ReadFrameLine();  //begin reading data frames from the SD card
         testState = stateDISCHARGE;
@@ -373,6 +380,9 @@ void CycleTest(void){
         if (startListRunning()){  //when function returns a 1, all messages have been sent
           testState = stateDISCHARGE;
         }
+      }
+      if (battType == CUMMINS_REV1){
+        digitalWrite(BRAMMO_INTRLK, HIGH);
       }
       break;
 
@@ -397,9 +407,7 @@ void CycleTest(void){
         }
       }
       else if(battType == INVNTS_80AH){
-        //if ((okToDischarge() == 12)||(okToDischarge() == 2)){  
-        //  break;
-        //}
+        //Serial.println(okToDischarge());
         if (okToDischarge() != 1){
           testState = stateDISCHARGE_INPUTOFF;
         }
@@ -419,21 +427,19 @@ void CycleTest(void){
         rechargeOn();
       }
       else if (battType == INVNTS_80AH){
-        digitalWrite(INVNTS_DISCHRG, LOW);
+        //digitalWrite(INVNTS_DISCHRG, LOW);
         rechargeOn();
       }
       break;
 
     case stateCHARGEENABLE:       //9
-      if (battType != INVNTS_80AH){
-        IC1200Enable = 0;
-        setIC1200Current = 0;
-        setIC1200Voltage = 0;
-      }
+      IC1200Enable = 0;
+      setIC1200Current = 0;
+      setIC1200Voltage = 0;
 
       if(battType == VALENCE_REV3){
         if (BMSrev3CANok()){
-          if (moduleSOCscale < 100.0){
+          if (moduleSOCscale < maxChargePercent){
             if (okToCharge() == 1){     //ok to charge
               rechargeOn();
               testState = stateCHARGE;  //start charging
@@ -471,7 +477,7 @@ void CycleTest(void){
       }
       else if (battType == INVNTS_80AH){
         if (Invnts80AhCANok()){
-          if (moduleSOCscale < 100.0){
+          if (moduleSOCscale < maxChargePercent){
             if (okToCharge() == 1){     //ok to charge
               rechargeOn();
               testState = stateCHARGE;  //start charging
@@ -515,7 +521,7 @@ void CycleTest(void){
         }
       }
       else if (battType == INVNTS_80AH){
-        if (chargeStatus==COMPLETE){ //(moduleSOCscale > 95.0)
+        if (moduleSOCscale >= maxChargePercent){  //(chargeStatus==COMPLETE) //(moduleSOCscale > 95.0)
           testState = stateENDOFCHRG;
         }
         else if (okToCharge() == 1){
@@ -532,8 +538,12 @@ void CycleTest(void){
 
     case  stateENDOFCHRG:             //11
       rechargeOff();
-      //flagSDPause = 1;
       testState = stateREPORTOUT;
+      if (battType == INVNTS_80AH){
+        if (okToDischarge() == 15){
+          testState = stateENDOFCHRG;
+        }
+      }
       break;
 
     case  stateREPORTOUT:             //12
@@ -611,8 +621,21 @@ void CycleTest(void){
     DQcurrentSetpoint = 15;
   }
 
-  setDQCurrent = DQcurrentSetpoint;
-  setDQVoltage = BMSchargeVoltSetpoint;
+  if (testState != stateDISCHARGE){  //don't override the SD card playback value for regen
+    if (battType == INVNTS_80AH){
+      if((moduleMaxMvolts>3550)&&(DQcurrentSetpoint > 7)){
+        DQcurrentSetpoint = 7;
+      }
+      if((moduleMaxMvolts>3520)&&(DQcurrentSetpoint > 15)){
+        DQcurrentSetpoint = 15;
+      }
+      if (moduleMaxMvolts<3490){
+        DQcurrentSetpoint = BMSchargeCurrSetpoint;
+      }
+    }
+    setDQCurrent = DQcurrentSetpoint;
+    setDQVoltage = BMSchargeVoltSetpoint;
+  }
 
   //--------------------handle Particle function override command-----------------
   if (DQfixedCurrOverride == 1){
@@ -621,10 +644,7 @@ void CycleTest(void){
   if (DQfixedVoltOverride == 1){
     setDQVoltage = fixedOverRideVolt;
   }
-  if (battType == INVNTS_80AH){
-    setIC1200Voltage = setDQVoltage;
-    setIC1200Current = setDQCurrent;
-  }
+  
 
   //----------------------------   MANAGE HEATER STATE MACHINE   ----------------------------------------------------//
   switch(heaterState)
@@ -714,6 +734,7 @@ void manageKeyRestart(void)
 
 void rechargeOn(void)
 {
+  DQchargerEnable = 1;
   ResetCycleTimer(CT_RECHARGE_DELAY);
   if (battType == CUMMINS_REV1){
     ResetCycleTimer(CT_CUMMINS_CHRG_DELAY);
@@ -722,6 +743,7 @@ void rechargeOn(void)
   }
   else if (moduleMinTemperature > CHARGE_MIN_TEMP){
     digitalWrite(CHARGE_EN, HIGH);
+    digitalWrite(INVNTS_DISCHRG, LOW);
     rechargeState = 1;
   }
   else{
@@ -731,6 +753,9 @@ void rechargeOn(void)
 
 void rechargeOff(void)
 {
+  if (battType == INVNTS_80AH){
+    digitalWrite(INVNTS_DISCHRG, HIGH);
+  }
   digitalWrite(CHARGE_EN, LOW);  //low
   rechargeState = 0;
 }
@@ -846,7 +871,7 @@ int okToDischarge(void){
   else if (ModuleLostState > ALARM){
     return 10;
   }
-  else if ((BMSrev3CANok() != 1)||(Invnts80AhCANok() != 1)){
+  else if ((BMSrev3CANok() == 0)&&(Invnts80AhCANok() == 0)){
     return 11;
   }
   else if (moduleMinTemperature <= DISCHARGE_MIN_TEMP){
@@ -855,18 +880,22 @@ int okToDischarge(void){
   else if (moduleMaxTemperature > MODULE_MAX_TEMP){
     return 13;
   }
-  else if (contactorMain == 0){
+  else if ((battType == VALENCE_REV3)&&(contactorMain == 0)){
     if (contactorStatFlag == 0){
       ResetCycleTimer(CT_CNTCTR_DELAY);
       contactorStatFlag = 1;
+      return 0;
     }
     else if (TimerExpired(&scastCycleTimers[CT_CNTCTR_DELAY])){
       return 14;
     }
   }
-  //else if (maxDischargeCurrent <= 1){
-    //return 12;
-  //}
+  else if ((battType == INVNTS_80AH)&&(maxDischargeCurrent == 0)){
+    return 15;
+  }
+  else if ((battType == INVNTS_80AH)&&(moduleSOCscale <= minDischargePercent)){
+    return 16;
+  }
   else{
     contactorStatFlag = 0;
     return 1;
@@ -877,7 +906,7 @@ int okToCharge(void){
   if (underTempChargeStatus > ALARM){
     return 2;
   }
-  else if (overTemperatureStatus > ALARM){
+  else if ((overTemperatureStatus > ALARM) && (overTempChargeStatus > ALARM)){
     return 3;
   }
   else if ((PCBAoverTempStatus > ALARM) && (shortCircuitStatus > ALARM)){
@@ -907,13 +936,10 @@ int okToCharge(void){
   else if (moduleMaxTemperature > MODULE_MAX_TEMP){
     return 12;
   }
-  //else if (contactorCharge == 0){
-  //  return 13;
-  //}
-  //else if (maxRegenCurrent <= 1){
-  //  return 11;
-  //}
   else{
+    if (battType == INVNTS_80AH){
+      BMSchargeVoltSetpoint = 30.4;
+    }
     return 1;
   }
 }

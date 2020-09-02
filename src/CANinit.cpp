@@ -3,6 +3,7 @@
 #include "CumminsCAN.h"
 #include "defines.h"
 #include "Globals.h"
+#include "Invnts80AhCAN.h"
 
 #include <carloop.h>
 
@@ -19,6 +20,10 @@ void initCAN(void){
     else if (battType == CUMMINS_REV1){
       carloop.setCANSpeed(CUMMINS_BAUD);        //must set can speed before enabling bus!
       initCumminsCAN();
+    }
+    else if (battType == INVNTS_80AH){
+      carloop.setCANSpeed(INVNTS_BAUD);        //must set can speed before enabling bus!
+      initInvnts80AhCAN();
     }
     else{
       carloop.setCANSpeed(VALENCE_BAUD);        //must set can speed before enabling bus!

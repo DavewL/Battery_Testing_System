@@ -13,7 +13,10 @@ static const unsigned int scawInvntsTimers[NUM_INVNTS_TIMERS] =
 
 static TICK_TIMER_S scastInvntsTimers[NUM_INVNTS_TIMERS];
 
+int cellVreads[8] = {0,0,0,0,0,0,0,0};
+
 void ResetInvntsTimer(INVNTS_TIMERS eCANTimer);
+void HandleCellVReads(int cellIndex);
 
 
 void initInvnts80AhCAN(void){
@@ -24,7 +27,7 @@ void initInvnts80AhCAN(void){
   }
 }
 
-void recInvntsStatus(CANMessage message){
+void recInvnts80AhStatus(CANMessage message){
   static int prevMillis = 0;
   int nowMillis;
   int deltaMillis;
@@ -39,6 +42,7 @@ void recInvntsStatus(CANMessage message){
       InvntsSOH = (int)message.data[3];
       maxDischargeCurrent = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))/100;
       BMSchargeCurrSetpoint = (float)((uint16_t)((message.data[7]<<8)|(message.data[6]<<0)))/100;
+      //Serial.println(BMSchargeCurrSetpoint);
     }
     if (((message.data[1]) == INVNTS_MUX_2) && (message.data[0] == 1)){  //data[0] is module number
       maxRegenCurrent = (float)((uint16_t)((message.data[3]<<8)|(message.data[2]<<0)))/100;
@@ -56,6 +60,7 @@ void recInvntsStatus(CANMessage message){
       }
     }
     if (((message.data[1]) == INVNTS_MUX_3) && (message.data[0] == 1)){  //data[0] is module number
+      InvntsCANRec = 1;
       /* -- charge faults ------------------------------------------------*/
       overTempChargeStatus = ((message.data[2]&0x01))*3;        //0000 0001
       underTempChargeStatus = ((message.data[2]&0x02) >> 1)*3;  //0000 0010
@@ -92,75 +97,35 @@ void recInvntsStatus(CANMessage message){
     nowMillis = millis();
     if (message.data[3] == CELL_1_MUX){
       battCell1mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
-      if (battCell1mv > moduleMaxMvolts) {
-        moduleMaxMvolts = battCell1mv;
-      }
-      if (battCell1mv < moduleMinMvolts){
-        moduleMinMvolts = battCell1mv;
-      }
+      HandleCellVReads(0);
     }
     else if (message.data[3] == CELL_2_MUX){
       battCell2mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
-      if (battCell2mv > moduleMaxMvolts) {
-        moduleMaxMvolts = battCell2mv;
-      }
-      if (battCell2mv < moduleMinMvolts){
-        moduleMinMvolts = battCell2mv;
-      }
+      HandleCellVReads(1);
     }
     else if (message.data[3] == CELL_3_MUX){
       battCell3mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
-      if (battCell3mv > moduleMaxMvolts) {
-        moduleMaxMvolts = battCell3mv;
-      }
-      if (battCell3mv < moduleMinMvolts){
-        moduleMinMvolts = battCell3mv;
-      }
+      HandleCellVReads(2);
     }
     else if (message.data[3] == CELL_4_MUX){
       battCell4mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
-      if (battCell4mv > moduleMaxMvolts) {
-        moduleMaxMvolts = battCell4mv;
-      }
-      if (battCell4mv < moduleMinMvolts){
-        moduleMinMvolts = battCell4mv;
-      }
+      HandleCellVReads(3);
     }
     else if (message.data[3] == CELL_5_MUX){
       battCell5mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
-      if (battCell5mv > moduleMaxMvolts) {
-        moduleMaxMvolts = battCell5mv;
-      }
-      if (battCell5mv < moduleMinMvolts){
-        moduleMinMvolts = battCell5mv;
-      }
+      HandleCellVReads(4);
     }
     else if (message.data[3] == CELL_6_MUX){
       battCell6mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
-      if (battCell6mv > moduleMaxMvolts) {
-        moduleMaxMvolts = battCell6mv;
-      }
-      if (battCell6mv < moduleMinMvolts){
-        moduleMinMvolts = battCell6mv;
-      }
+      HandleCellVReads(5);
     }
     else if (message.data[3] == CELL_7_MUX){
       battCell7mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
-      if (battCell7mv > moduleMaxMvolts) {
-        moduleMaxMvolts = battCell7mv;
-      }
-      if (battCell7mv < moduleMinMvolts){
-        moduleMinMvolts = battCell7mv;
-      }
+      HandleCellVReads(6);
     }
     else if (message.data[3] == CELL_8_MUX){
       battCell8mv = (uint16_t)((message.data[5]<<8)|(message.data[4]<<0));
-      if (battCell8mv > moduleMaxMvolts) {
-        moduleMaxMvolts = battCell8mv;
-      }
-      if (battCell8mv < moduleMinMvolts){
-        moduleMinMvolts = battCell8mv;
-      }
+      HandleCellVReads(7);
     }
     
   }
@@ -238,4 +203,66 @@ void InvntsSDOWriteReq(int sub_index, int wr_data){
   message.data[4] = (byte)(wr_data >> 0) & 0xFF;
   message.data[5] = (byte)(wr_data >> 8) & 0xFF;
   carloop.can().transmit(message);
+}
+
+void HandleCellVReads(int cellIndex){
+  cellVreads[cellIndex] = 1;  //update this cells read status array value to 1
+
+  int allCellsUpdated = 1;    //used to trigger min/max checks when all cells have been read
+
+  for (int i = 0; i<8; i++){    //check to see if all cells have been read
+    if (cellVreads[i] == 0){
+      allCellsUpdated = 0;
+    }
+  }
+
+  if (allCellsUpdated == 1){        // if all cell have been read, update the min/max values
+    moduleMaxMvolts = battCell1mv;
+    moduleMinMvolts = battCell1mv;
+    if (battCell2mv > moduleMaxMvolts) {
+      moduleMaxMvolts = battCell2mv;
+    }
+    if (battCell2mv < moduleMinMvolts){
+      moduleMinMvolts = battCell2mv;
+    }
+    if (battCell3mv > moduleMaxMvolts) {
+      moduleMaxMvolts = battCell3mv;
+    }
+    if (battCell3mv < moduleMinMvolts){
+      moduleMinMvolts = battCell3mv;
+    }
+    if (battCell4mv > moduleMaxMvolts) {
+      moduleMaxMvolts = battCell4mv;
+    }
+    if (battCell4mv < moduleMinMvolts){
+      moduleMinMvolts = battCell4mv;
+    }
+    if (battCell5mv > moduleMaxMvolts) {
+      moduleMaxMvolts = battCell5mv;
+    }
+    if (battCell5mv < moduleMinMvolts){
+      moduleMinMvolts = battCell5mv;
+    }
+    if (battCell6mv > moduleMaxMvolts) {
+      moduleMaxMvolts = battCell6mv;
+    }
+    if (battCell6mv < moduleMinMvolts){
+      moduleMinMvolts = battCell6mv;
+    }
+    if (battCell7mv > moduleMaxMvolts) {
+      moduleMaxMvolts = battCell7mv;
+    }
+    if (battCell7mv < moduleMinMvolts){
+      moduleMinMvolts = battCell7mv;
+    }
+    if (battCell8mv > moduleMaxMvolts) {
+      moduleMaxMvolts = battCell8mv;
+    }
+    if (battCell8mv < moduleMinMvolts){
+      moduleMinMvolts = battCell8mv;
+    }
+    for (int n = 0; n<8; n++){  //reset the read status array to 0's
+      cellVreads[n] = 0;
+    }
+  }
 }

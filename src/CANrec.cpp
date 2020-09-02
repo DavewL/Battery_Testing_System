@@ -7,6 +7,7 @@
 #include "CumminsCAN.h"
 #include "Globals.h"
 #include "defines.h"
+#include "Invnts80AhCAN.h"
 
 int msgRec = 1;
 
@@ -35,9 +36,13 @@ int canReceiveMessage(){
     else if (battType == CUMMINS_REV1){
       recCumminsStatus(message);
     }
+    else if (battType == INVNTS_80AH){
+      recInvnts80AhStatus(message);   //DECODE INVNTS MESSAGES
+      receiveCSMtemps(message);       //DECODE CSM TEMPERATURE MESSAGES
+      receiveMesDQCANopen(message);   //DECODE DELTA-Q CANOPEN MESSAGES}
     //receiveMessagesTraction();  //DECODE TRACTION MESSAGES
     //receiveMessagesVCU();       //DECODE VCU MESSAGES
-
+    }
   }
   else{
     if ((timeNow - timePrevMsg) > CAN_LOST_TIME){ //if more than CAN_LOST_TIME seconds has elapsed since last message

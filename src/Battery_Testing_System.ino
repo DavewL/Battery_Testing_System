@@ -130,7 +130,7 @@ int InvntsDischrgEnabled;
 int InvntsInterlockDetected;
 int InvntsSOH = 0;
 int InvntsHeaterStat = NA;
-
+int InvntsCANRec = 0;
 
 int overTempChargeStatus = 4;
 int otherChargeFaultStatus = 4;
@@ -138,6 +138,9 @@ int overTempDischargeStatus = 4;
 int otherDischargeFaultStatus = 4;
 int shortCircuitStatus = 4;
 int internalCommStatus = 4;
+
+int maxChargePercent = 100;
+int minDischargePercent = 0;
 
 extern String testState2String;
 
@@ -201,6 +204,7 @@ void loop() {
 
         else if ((timedLoop & OS_80MS_MASK) == OS_80MS_MASK){
           Tasks80ms();
+          //Serial.println(testState2String);
         }
 
         else if ((timedLoop & OS_160MS_MASK) == OS_160MS_MASK){

@@ -34,8 +34,8 @@ typedef enum
   FIRST_INVNTS_TIMER = 0
 } INVNTS_TIMERS;
 
-void initInvntsCAN(void);
-void recInvntsStatus(CANMessage message);
+void initInvnts80AhCAN(void);
+void recInvnts80AhStatus(CANMessage message);
 int Invnts80AhCANok(void);
 void InvntsSDOReadReq(int);
 void InvntsSDOWriteReq(int, int);

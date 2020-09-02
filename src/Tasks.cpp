@@ -121,11 +121,12 @@ void Tasks80ms(){
 
 void Tasks160ms(){
   if (onceThrough == 1){
-    transmitIC1200VoltsAmps();
+    //transmitIC1200VoltsAmps();
     if(battType==VALENCE_REV3){
       transmitRPDO1();
     }
     else if (battType == INVNTS_80AH){
+      transmitRPDO1();
       InvntsSDOReadReq(INVNTS_VOLTS_SUBINDEX);
       InvntsSDOReadReq(INVNTS_CURRENT_SUBINDEX);
       InvntsSDOReadReq(INVNTS_CHRG_STATUS_SUBINDEX);

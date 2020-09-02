@@ -1,5 +1,7 @@
 #include "application.h"
 
+#define INVNTS_CHRG_V_CUTOFF 27
+
 const int CHARGE_EN = D3;  //enables charging and opens discharge contactor
 const int IGN = D4;       //enables the ignition line on BMS (used for reseting alarm(s) after discharge cycle)
 const int HEATER = D5;  //enables the heater relay

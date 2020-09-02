@@ -105,8 +105,8 @@ extern unsigned int BMSstatusWord;
 extern int InvntsSystemState;
 extern int InvntsDischrgEnabled;
 extern int InvntsInterlockDetected;
-
 extern int InvntsSOH;
+extern int InvntsCANRec;
 
 extern int overTempChargeStatus;
 extern int otherChargeFaultStatus;
@@ -116,3 +116,6 @@ extern int shortCircuitStatus;
 extern int internalCommStatus;
 
 extern int InvntsHeaterStat;
+
+extern int maxChargePercent;
+extern int minDischargePercent;

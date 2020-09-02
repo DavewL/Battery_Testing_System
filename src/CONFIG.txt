@@ -2,6 +2,9 @@
 //VALENCE_R3, CUMMINS_R1, INVNTS_80AH, INVNTS_60AH
 #FUNCTION=CYCLE;
 //CYCLE, VEHICLE_LOG, HOT, COLD
+#MAX_CHARGE_PERCNT=90;
+//If less than 100%, no other fully-charged checked will happen
+#MIN_DISCHARGE_PERCNT=10;
 #DISCHARGER_CYCLE_TYPE=SD_REPLAY;
 //SD_REPLAY, LIST
 //LIST plays a preset list of Amp settings on the discharger

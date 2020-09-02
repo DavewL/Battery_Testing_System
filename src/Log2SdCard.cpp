@@ -170,6 +170,12 @@ void initSDcard(void){
               testType = CYCLE;
             }
           }
+          else if (fieldSubStringHead == "#MAX_CHARGE_PERCNT"){
+            maxChargePercent = fieldSubStringValue.toInt();
+          }
+          else if (fieldSubStringHead == "#MIN_DISCHARGE_PERCNT"){
+            minDischargePercent = fieldSubStringValue.toInt();
+          }
           else if (fieldSubStringHead == "#DISCHARGER_CYCLE_TYPE"){
             if (fieldSubStringValue == "SD_REPLAY"){
               dischargerType = SD_REPLAY;
@@ -690,13 +696,30 @@ void ReadFrameLine(void){
             IC1200Enable = 1;
             setIC1200Current = (NextLoadFrame.Power/battVoltage)+0.5;
             setIC1200Voltage = 32;
-            transmitIC1200VoltsAmps();
+            if (battType == INVNTS_80AH){
+              DQchargerEnable = 1;
+              setDQVoltage = setIC1200Voltage;
+              setDQCurrent = setIC1200Current;
+              transmitRPDO1();
+            }
+            else{
+              transmitIC1200VoltsAmps();
+            }
           }
           else{
             IC1200Enable = 0;
             setIC1200Current = 0;
             setIC1200Voltage = 0;
-            transmitIC1200VoltsAmps();
+            if (battType == INVNTS_80AH){
+              DQchargerEnable = 0;
+              setDQVoltage = setIC1200Voltage;
+              setDQCurrent = setIC1200Current;
+              transmitRPDO1();
+            }
+            else{
+              transmitIC1200VoltsAmps();
+            }
+  
             sendFixPwrLevel((int)abs(NextLoadFrame.Power));
           }
           //Serial.println(frameDelaymSec);
