@@ -240,7 +240,6 @@ void CycleTest(void){
           break;
         }
       }
-
       //Serial.println(okToCharge());
       if (battType == VALENCE_REV3){
         if (BMSrev3CANok()){
