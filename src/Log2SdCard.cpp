@@ -267,7 +267,7 @@ void openReadWriteFiles(int what2log){
             myFile.println(logFileHeader);                                                                                                                                                                                                                         //--
           }
           if (BMSlogging == 1){                                                                                                                                                                                                                                    //--
-              myFile.println("#BMS,TIME,INTERVAL,BATTERY TYPE,FAULT STATUS,VOLTAGE,CURRENT,MIN CELL TEMP,MAX CELL TEMP,SOC,CELL1,CELL2,CELL3,CELL4,CELL5,CELL6,CELL7,CELL8,AMPHOURS,CUML AMPHOURS,WATTHOURS,CUML WATTHOURS,MAX DISCH CURR,MAX REGEN CURR,BATT MODULE SN,BMS CHRG CURR SETPNT,BMS CHRG VOLT SETPNT,MODULE SOH");  //--
+              myFile.println("#BMS,TIME,INTERVAL,BATTERY TYPE,FAULT STATUS,VOLTAGE,CURRENT,MIN CELL TEMP,MAX CELL TEMP,SOC,CELL1,CELL2,CELL3,CELL4,CELL5,CELL6,CELL7,CELL8,AMPHOURS,CUML AMPHOURS,WATTHOURS,CUML WATTHOURS,MAX DISCH CURR,MAX REGEN CURR,BATT MODULE SN,BMS CHRG CURR SETPNT,BMS CHRG VOLT SETPNT,MODULE SOH,HEATER STATUS");  //--
           }                                                                                                                                                                                                                                                        //--
           if (TRAClogging == 1){                                                                                                                                                                                                                                   //--
              myFile.println("#TRACTION,TIME,INTERVAL,LEFT FAULT STATUS,LEFT VOLTAGE,LEFT MOTOR SPEED,LEFT RMS CURRENT,LEFT MOTOR TEMP,LEFT CONTRLR TEMP,RIGHT FAULT STATUS,RIGHT VOLTAGE,RIGHT MOTOR SPEED,RIGHT RMS CURRENT,RIGHT MOTOR TEMP,RIGHT CONTRLR TEMP");         //--
@@ -524,8 +524,8 @@ void Log2SD(int what2log){
             cumlAmpHrs = cumlAmpHrs + ampHours;
             cumlWattHrs = cumlWattHrs + wattHours;
             // if the file opened okay, write to it:
-            myFile.printf("#BMS,%d,%d,INVNTS_80AH,%d,%.3f,%.1f,%d,%d,%.2f,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%.1f,%.1f,%d,%.1f,%.1f,%d\n"
-            ,Time.now(),interval,BMSstatus,fCombinedModuleVolts,battCurrent,moduleMinTemperature,moduleMaxTemperature,moduleSOCscale,battCell1mv,battCell2mv,battCell3mv,battCell4mv,battCell5mv,battCell6mv,battCell7mv,battCell8mv,ampHours,cumlAmpHrs,wattHours,cumlWattHrs,maxDischargeCurrent,maxRegenCurrent,battSN,BMSchargeCurrSetpoint,BMSchargeVoltSetpoint,InvntsSOH);
+            myFile.printf("#BMS,%d,%d,INVNTS_80AH,%d,%.3f,%.1f,%d,%d,%.2f,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%.1f,%.1f,%d,%.1f,%.1f,%d,%d\n"
+            ,Time.now(),interval,BMSstatusWord,fCombinedModuleVolts,battCurrent,moduleMinTemperature,moduleMaxTemperature,moduleSOCscale,battCell1mv,battCell2mv,battCell3mv,battCell4mv,battCell5mv,battCell6mv,battCell7mv,battCell8mv,ampHours,cumlAmpHrs,wattHours,cumlWattHrs,maxDischargeCurrent,maxRegenCurrent,battSN,BMSchargeCurrSetpoint,BMSchargeVoltSetpoint,InvntsSOH,InvntsHeaterStat);
             ampHours = 0;
             wattHours = 0;
             BMS_t_prev = Time.now();

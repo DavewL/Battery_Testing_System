@@ -204,7 +204,7 @@ void loop() {
 
         else if ((timedLoop & OS_80MS_MASK) == OS_80MS_MASK){
           Tasks80ms();
-          //Serial.println(testState2String);
+          
         }
 
         else if ((timedLoop & OS_160MS_MASK) == OS_160MS_MASK){

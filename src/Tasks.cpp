@@ -131,6 +131,8 @@ void Tasks160ms(){
       InvntsSDOReadReq(INVNTS_CURRENT_SUBINDEX);
       InvntsSDOReadReq(INVNTS_CHRG_STATUS_SUBINDEX);
       InvntsSDOReadReq(INVNTS_HEATER_STATUS_SUBINDEX);
+      InvntsSDOReadReq(INVNTS_MIN_CELL_TEMP);
+      InvntsSDOReadReq(INVNTS_MAX_CELL_TEMP);
     }
   }
 }

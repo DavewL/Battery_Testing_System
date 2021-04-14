@@ -87,9 +87,16 @@ void recInvnts80AhStatus(CANMessage message){
       if (internalCommStatus){
         internalCommStatus = ((message.data[5]&0x032) >> 5)*3;        //0010 0000
       }
-      
-      moduleMaxTemperature = ((float)((int16_t)((message.data[7]<<8)|(message.data[6]<<0)))/10)-273.15;
-      moduleMinTemperature = moduleMaxTemperature;
+
+      if ((message.data[2] != 0) || (message.data[3] != 0)){
+        BMSstatusWord = (uint16_t)((message.data[3]<<8)|(message.data[2]));
+      }
+      else if ((message.data[4] != 0 ) || (message.data[5] != 0)){
+        BMSstatusWord = (uint16_t)((message.data[5]<<8)|(message.data[4]));
+      }
+
+      //moduleMaxTemperature = ((float)((int16_t)((message.data[7]<<8)|(message.data[6]<<0)))/10)-273.15;
+      //moduleMinTemperature = moduleMaxTemperature;
     }
   }
   else if (message.id == INVNTS_CELL_VOLTS_ID){
@@ -158,6 +165,12 @@ void recInvnts80AhStatus(CANMessage message){
         else{
           chargeStatus = MAIN;
         }
+      }
+      else if (message.data[3] == INVNTS_MIN_CELL_TEMP){
+        moduleMinTemperature = ((float)((int16_t)((message.data[5]<<8)|(message.data[4]<<0)))/10)-273.15;
+      }
+      else if (message.data[3] == INVNTS_MAX_CELL_TEMP){
+        moduleMaxTemperature = ((float)((int16_t)((message.data[5]<<8)|(message.data[4]<<0)))/10)-273.15;
       }
     }
   }

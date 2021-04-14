@@ -171,6 +171,7 @@ void CycleTest(void){
     }                                                         //--
     //------------------------------------------------------------
   }
+  Serial.println(testState2String);
   switch (testState)
   {
     case stateINIT:             //0
@@ -240,7 +241,7 @@ void CycleTest(void){
           break;
         }
       }
-      //Serial.println(okToCharge());
+      Serial.println(okToCharge());
       if (battType == VALENCE_REV3){
         if (BMSrev3CANok()){
           if (moduleSOCscale < maxChargePercent){
@@ -291,7 +292,7 @@ void CycleTest(void){
               rechargeOn();
               testState = statePOWERRESET_CHARGE;  //start charging
             }
-            else if(okToCharge() == 11){ //too cold to charge yet
+            else if(okToCharge() == 2){ //too cold to charge yet
               rechargeOff();
               testState = statePOWERRESET_CHARGE;
             }
@@ -344,8 +345,8 @@ void CycleTest(void){
         else if (okToCharge() == 1){
           rechargeOn();
         }
-        else if (okToCharge() == 11){
-          rechargeOff();
+        else if (okToCharge() == 2){
+          rechargeOn();
         }
         else{
           testState = stateERRORHALT;
@@ -481,7 +482,7 @@ void CycleTest(void){
               rechargeOn();
               testState = stateCHARGE;  //start charging
             }
-            else if(okToCharge() == 11){ //too cold to charge yet
+            else if(okToCharge() == 2){ //too cold to charge yet
               rechargeOff();
               testState = stateCHARGE;
             }
@@ -526,8 +527,8 @@ void CycleTest(void){
         else if (okToCharge() == 1){
           rechargeOn();
         }
-        else if (okToCharge() == 11){
-          rechargeOff();
+        else if (okToCharge() == 2){
+          rechargeOn();
         }
         else{
           testState = stateERRORHALT;
@@ -740,6 +741,11 @@ void rechargeOn(void)
     digitalWrite(CHARGE_EN, HIGH);
     rechargeState = 1;
   }
+  else if (battType == INVNTS_80AH){
+    digitalWrite(CHARGE_EN, HIGH);
+    digitalWrite(INVNTS_DISCHRG, LOW);
+    rechargeState = 1;
+  }
   else if (moduleMinTemperature > CHARGE_MIN_TEMP){
     digitalWrite(CHARGE_EN, HIGH);
     digitalWrite(INVNTS_DISCHRG, LOW);
@@ -903,6 +909,11 @@ int okToDischarge(void){
 
 int okToCharge(void){
   if (underTempChargeStatus > ALARM){
+    if (battType == INVNTS_80AH){
+      if (BMSchargeCurrSetpoint > 0){
+        BMSchargeVoltSetpoint = 30.4;
+      }
+    }
     return 2;
   }
   else if ((overTemperatureStatus > ALARM) && (overTempChargeStatus > ALARM)){
@@ -937,7 +948,9 @@ int okToCharge(void){
   }
   else{
     if (battType == INVNTS_80AH){
-      BMSchargeVoltSetpoint = 30.4;
+      if (BMSchargeCurrSetpoint > 0){
+        BMSchargeVoltSetpoint = 30.4;
+      }
     }
     return 1;
   }

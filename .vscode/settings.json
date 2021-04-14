@@ -4,7 +4,7 @@
     "files.associations": {
         "*.ino": "cpp"
     },
-    "particle.targetDevice": "mighty_wizard",
+    "particle.targetDevice": "Battery_Test_Fixture",
     "particle.firmwareVersion": "1.5.2",
     "particle.targetPlatform": "photon",
     "cortex-debug.openocdPath": "${command:particle.getDebuggerOpenocdPath}"
