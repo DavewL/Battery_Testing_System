@@ -13,6 +13,8 @@
 #include "DeltaQ_CANopen.h"
 #include "defines.h"
 #include "Network.h"
+#include "InvntsOldCAN.h"
+#include "Invnts60AhCAN.h"
 #include "Invnts80AhCAN.h"
 
 int OneSecCounter = 0; //used to run a 1 second timer
@@ -25,7 +27,7 @@ extern String battVolt2String;
 extern String battMaxTemp2String;
 extern String battSOC2String;
 //int lastTime = millis();
-
+ 
 void TasksInit(){
     //initLED();  //heartbeat LED
     //Serial.begin(9600);
@@ -125,14 +127,32 @@ void Tasks160ms(){
     if(battType==VALENCE_REV3){
       transmitRPDO1();
     }
+    else if (battType == INVNTS_OLD){
+      transmitRPDO1();
+      InvntsOldSDOReadReq(INVNTS_VOLTS_SUBINDEX);
+      InvntsOldSDOReadReq(INVNTS_CURRENT_SUBINDEX);
+      InvntsOldSDOReadReq(INVNTS_CHRG_STATUS_SUBINDEX);
+      InvntsOldSDOReadReq(INVNTS_HEATER_STATUS_SUBINDEX);
+      InvntsOldSDOReadReq(INVNTS_MIN_CELL_TEMP);
+      InvntsOldSDOReadReq(INVNTS_MAX_CELL_TEMP);
+    }
+    else if (battType == INVNTS_60AH){
+      transmitRPDO1();
+      //Invnts60AhSDOReadReq(INVNTS_VOLTS_SUBINDEX);
+      //Invnts60AhSDOReadReq(INVNTS_CURRENT_SUBINDEX);
+      //Invnts60AhSDOReadReq(INVNTS_CHRG_STATUS_SUBINDEX);
+      Invnts60AhSDOReadReq(INVNTS_HEATER_STATUS_SUBINDEX);
+      //Invnts60AhSDOReadReq(INVNTS_MIN_CELL_TEMP);
+      //Invnts60AhSDOReadReq(INVNTS_MAX_CELL_TEMP);
+    }
     else if (battType == INVNTS_80AH){
       transmitRPDO1();
-      InvntsSDOReadReq(INVNTS_VOLTS_SUBINDEX);
-      InvntsSDOReadReq(INVNTS_CURRENT_SUBINDEX);
-      InvntsSDOReadReq(INVNTS_CHRG_STATUS_SUBINDEX);
-      InvntsSDOReadReq(INVNTS_HEATER_STATUS_SUBINDEX);
-      InvntsSDOReadReq(INVNTS_MIN_CELL_TEMP);
-      InvntsSDOReadReq(INVNTS_MAX_CELL_TEMP);
+      //Invnts80AhSDOReadReq(INVNTS_VOLTS_SUBINDEX);
+      //Invnts80AhSDOReadReq(INVNTS_CURRENT_SUBINDEX);
+      //Invnts80AhSDOReadReq(INVNTS_CHRG_STATUS_SUBINDEX);
+      Invnts80AhSDOReadReq(INVNTS_HEATER_STATUS_SUBINDEX);
+      //Invnts80AhSDOReadReq(INVNTS_MIN_CELL_TEMP);
+      //Invnts80AhSDOReadReq(INVNTS_MAX_CELL_TEMP);
     }
   }
 }

@@ -48,6 +48,16 @@ void receiveMesDQCANopen(CANMessage message){
     IC1200wallPluggedIn = (message.data[4] >> 4) & 0x01;
     IC1200current = (float)((message.data[1]<<8)|(message.data[0]<<0))*0.003906;
     IC1200voltage = (float)((message.data[3]<<8)|(message.data[2]<<0))*0.003906;
+    if (battType == INVNTS_OLD){
+      DQwallPluggedIn = IC1200wallPluggedIn;
+      DQcurrent = IC1200current;
+      DQvoltage = IC1200voltage;
+    }
+    if (battType == INVNTS_60AH){
+      DQwallPluggedIn = IC1200wallPluggedIn;
+      DQcurrent = IC1200current;
+      DQvoltage = IC1200voltage;
+    }
     if (battType == INVNTS_80AH){
       DQwallPluggedIn = IC1200wallPluggedIn;
       DQcurrent = IC1200current;

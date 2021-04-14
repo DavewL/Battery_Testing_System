@@ -7,6 +7,8 @@
 #include "CumminsCAN.h"
 #include "Globals.h"
 #include "defines.h"
+#include "InvntsOldCAN.h"
+#include "Invnts60AhCAN.h"
 #include "Invnts80AhCAN.h"
 
 int msgRec = 1;
@@ -35,6 +37,20 @@ int canReceiveMessage(){
     }
     else if (battType == CUMMINS_REV1){
       recCumminsStatus(message);
+    }
+    else if (battType == INVNTS_OLD){
+      recInvntsOldStatus(message);   //DECODE INVNTS MESSAGES
+      receiveCSMtemps(message);       //DECODE CSM TEMPERATURE MESSAGES
+      receiveMesDQCANopen(message);   //DECODE DELTA-Q CANOPEN MESSAGES}
+    //receiveMessagesTraction();  //DECODE TRACTION MESSAGES
+    //receiveMessagesVCU();       //DECODE VCU MESSAGES
+    }
+    else if (battType == INVNTS_60AH){
+      recInvnts60AhStatus(message);   //DECODE INVNTS MESSAGES
+      receiveCSMtemps(message);       //DECODE CSM TEMPERATURE MESSAGES
+      receiveMesDQCANopen(message);   //DECODE DELTA-Q CANOPEN MESSAGES}
+    //receiveMessagesTraction();  //DECODE TRACTION MESSAGES
+    //receiveMessagesVCU();       //DECODE VCU MESSAGES
     }
     else if (battType == INVNTS_80AH){
       recInvnts80AhStatus(message);   //DECODE INVNTS MESSAGES

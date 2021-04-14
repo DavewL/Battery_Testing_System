@@ -51,8 +51,9 @@
 #define VALENCE_REV3 (1)
 #define CUMMINS_REV1 (2)
 #define SD_CONF (3)
-#define INVNTS_80AH (4)
+#define INVNTS_OLD (4)
 #define INVNTS_60AH (5)
+#define INVNTS_80AH (6)
 
 //TEST TYPE defines
 #define CYCLE (1)

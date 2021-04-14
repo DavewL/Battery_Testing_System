@@ -1,29 +1,29 @@
 //Invntus Message Protocol
-#include "Invnts80AhCAN.h"
+#include "Invnts60AhCAN.h"
 #include "defines.h"
 #include "Globals.h"
 #include "TickTimer.h"
 
 extern Carloop<CarloopRevision2> carloop;
 
-static const unsigned int scawInvnts80AhTimers[NUM_INVNTS_80AH_TIMERS] =
+static const unsigned int scawInvntsTimers[NUM_INVNTS_60AH_TIMERS] =
 {
-  /* CT_INVNTS_80AH_LOST_DELAY   */   2000,  //ms -delay before INVNTS CAN is assumed lost
+  /* CT_INVNTS_60AH_LOST_DELAY   */   2000,  //ms -delay before INVNTS CAN is assumed lost
 };
 
-static TICK_TIMER_S scastInvnts80AhTimers[NUM_INVNTS_80AH_TIMERS];
+static TICK_TIMER_S scastInvntsTimers[NUM_INVNTS_60AH_TIMERS];
 
-void ResetInvntsTimer(INVNTS_80AH_TIMERS eCANTimer);
+void ResetInvntsTimer(INVNTS_60AH_TIMERS eCANTimer);
 
-void initInvnts80AhCAN(void){
+void initInvnts60AhCAN(void){
   unsigned int wIndex;  
-  for (wIndex = 0; wIndex < ((unsigned int)NUM_INVNTS_80AH_TIMERS); wIndex++){
-   RegisterTimer(&scastInvnts80AhTimers[wIndex]);
-   ResetInvntsTimer((INVNTS_80AH_TIMERS)wIndex);
+  for (wIndex = 0; wIndex < ((unsigned int)NUM_INVNTS_60AH_TIMERS); wIndex++){
+   RegisterTimer(&scastInvntsTimers[wIndex]);
+   ResetInvntsTimer((INVNTS_60AH_TIMERS)wIndex);
   }
 }
 
-void recInvnts80AhStatus(CANMessage message){
+void recInvnts60AhStatus(CANMessage message){
   static int prevMillis = 0;
   int nowMillis;
   int deltaMillis;
@@ -31,7 +31,7 @@ void recInvnts80AhStatus(CANMessage message){
   float tempWattSeconds;
 
   if (message.id == INVNTS_TPDO1_ID){
-    ResetInvntsTimer(CT_INVNTS_80AH_LOST_DELAY);
+    ResetInvntsTimer(CT_INVNTS_60AH_LOST_DELAY);
     nowMillis = millis();
     
     moduleSOCscale = (float)message.data[0];  //SOC %
@@ -85,7 +85,7 @@ void recInvnts80AhStatus(CANMessage message){
   }
 
   else if (message.id == INVNTS_TPDO2_ID){
-      ResetInvntsTimer(CT_INVNTS_80AH_LOST_DELAY);
+      ResetInvntsTimer(CT_INVNTS_60AH_LOST_DELAY);
       nowMillis = millis();
 
       battCurrent = (float)((int16_t)((message.data[1]<<8)|(message.data[0]<<0)))/100;  //      
@@ -103,22 +103,22 @@ void recInvnts80AhStatus(CANMessage message){
       maxDischargeCurrent = (float)((uint16_t)((message.data[7]<<8)|(message.data[6]<<0)))/100;
   }
   else if (message.id == INVNTS_TPDO3_ID){
-      ResetInvntsTimer(CT_INVNTS_80AH_LOST_DELAY);
+      ResetInvntsTimer(CT_INVNTS_60AH_LOST_DELAY);
       nowMillis = millis();
 
-      moduleMinTemperature = ((float)((int16_t)((message.data[3]<<8)|(message.data[2]<<0)))/10);// -273.15;
-      moduleMaxTemperature = ((float)((int16_t)((message.data[5]<<8)|(message.data[4]<<0)))/10);// -273.15;
+      moduleMinTemperature = ((float)((int16_t)((message.data[3]<<8)|(message.data[2]<<0)))/10)-273.15;
+      moduleMaxTemperature = ((float)((int16_t)((message.data[5]<<8)|(message.data[4]<<0)))/10)-273.15;
   }
   else if (message.id == INVNTS_TPDO4_ID){
-      ResetInvntsTimer(CT_INVNTS_80AH_LOST_DELAY);
+      ResetInvntsTimer(CT_INVNTS_60AH_LOST_DELAY);
       nowMillis = millis();
-      battVoltage = (float)((uint16_t)((message.data[1]<<8)|(message.data[0]<<0)))*0.001; //voltage
+      battVoltage = (float)((uint16_t)((message.data[1]<<8)|(message.data[0]<<0)))*0.002; //voltage
       moduleMinMvolts = (float)((uint16_t)((message.data[3]<<8)|(message.data[2]<<0)))*0.001; //cell min voltage
       moduleMaxMvolts = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))*0.001; //cell max voltage
   }
 
   else if (message.id == INVNTS_SDO_RESP_ID){
-    ResetInvntsTimer(CT_INVNTS_80AH_LOST_DELAY);
+    ResetInvntsTimer(CT_INVNTS_60AH_LOST_DELAY);
     nowMillis = millis();
     if ((message.data[0] == 0x4B)&&(message.data[1]==0x01)&&(message.data[2]==0xC1)){
       if (message.data[3] == INVNTS_VOLTS_SUBINDEX){
@@ -157,8 +157,8 @@ void recInvnts80AhStatus(CANMessage message){
   }
 }
 
-int Invnts80AhCANok(void){
-  if (TimerExpired(&scastInvnts80AhTimers[CT_INVNTS_80AH_LOST_DELAY])){
+int Invnts60AhCANok(void){
+  if (TimerExpired(&scastInvntsTimers[CT_INVNTS_60AH_LOST_DELAY])){
     return 0;
   }
   else{
@@ -166,15 +166,15 @@ int Invnts80AhCANok(void){
   }
 }
 
-void ResetInvntsTimer(INVNTS_80AH_TIMERS eCANTimer)
+void ResetInvntsTimer(INVNTS_60AH_TIMERS eCANTimer)
 {
-  if (eCANTimer < NUM_INVNTS_80AH_TIMERS)
+  if (eCANTimer < NUM_INVNTS_60AH_TIMERS)
   {
-    SetTimerWithMilliseconds(&scastInvnts80AhTimers[eCANTimer], scawInvnts80AhTimers[eCANTimer]);
+    SetTimerWithMilliseconds(&scastInvntsTimers[eCANTimer], scawInvntsTimers[eCANTimer]);
   }
 }
 
-void Invnts80AhSDOReadReq(int sub_index){
+void Invnts60AhSDOReadReq(int sub_index){
   CANMessage message;
   message.id = 0x631;
   message.len = 4;
@@ -186,7 +186,7 @@ void Invnts80AhSDOReadReq(int sub_index){
   carloop.can().transmit(message);
 }
 
-void Invnts80AhSDOWriteReq(int sub_index, int wr_data){
+void Invnts60AhSDOWriteReq(int sub_index, int wr_data){
   CANMessage message;
   message.id = 0x631;
   message.len = 4;

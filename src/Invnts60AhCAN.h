@@ -33,13 +33,13 @@
 
 typedef enum
 {
-  CT_INVNTS_80AH_LOST_DELAY,
-  NUM_INVNTS_80AH_TIMERS,
-  FIRST_INVNTS_80AH_TIMER = 0
-} INVNTS_80AH_TIMERS;
+  CT_INVNTS_60AH_LOST_DELAY,
+  NUM_INVNTS_60AH_TIMERS,
+  FIRST_INVNTS_60AH_TIMER = 0
+} INVNTS_60AH_TIMERS;
 
-void initInvnts80AhCAN(void);
-void recInvnts80AhStatus(CANMessage message);
-int Invnts80AhCANok(void);
-void Invnts80AhSDOReadReq(int);
-void Invnts80AhSDOWriteReq(int, int);
+void initInvnts60AhCAN(void);
+void recInvnts60AhStatus(CANMessage message);
+int Invnts60AhCANok(void);
+void Invnts60AhSDOReadReq(int);
+void Invnts60AhSDOWriteReq(int, int);

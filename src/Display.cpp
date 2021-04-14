@@ -7,6 +7,8 @@
 #include "defines.h"
 #include "Rev3Messages.h"
 #include "CumminsCAN.h"
+#include "InvntsOldCAN.h"
+#include "Invnts60AhCAN.h"
 #include "Invnts80AhCAN.h"
 
 extern ElLoadFrame CurrLoadFrame;
@@ -105,6 +107,22 @@ void dispBatteryStats(){
   }
   else if (battType == CUMMINS_REV1){
     if (CumminsCANok()){
+      CANok = 1;
+    }
+    else{
+      CANok = 0;
+    }
+  }
+  else if (battType == INVNTS_OLD){
+    if (InvntsOldCANok()){
+      CANok = 1;
+    }
+    else{
+      CANok = 0;
+    }
+  }
+  else if (battType == INVNTS_60AH){
+    if (Invnts60AhCANok()){
       CANok = 1;
     }
     else{
@@ -459,6 +477,18 @@ void dispBattery(){
   else if (battType == CUMMINS_REV1){
     if (CumminsCANok()){
       tempCANstatus = "   CUMMINS CAN OK";
+      tft.setTextColor(ILI9341_BLACK,ILI9341_GREEN);
+    }
+  }
+  else if (battType == INVNTS_OLD){
+    if (InvntsOldCANok()){
+      tempCANstatus = "   INVNTUS CAN OK";
+      tft.setTextColor(ILI9341_BLACK,ILI9341_GREEN);
+    }
+  }
+  else if (battType == INVNTS_60AH){
+    if (Invnts60AhCANok()){
+      tempCANstatus = "   INVNTUS CAN OK";
       tft.setTextColor(ILI9341_BLACK,ILI9341_GREEN);
     }
   }

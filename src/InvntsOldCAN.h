@@ -2,10 +2,8 @@
 #include "defines.h"
 #include <carloop.h>
 
-#define INVNTS_TPDO1_ID 0x1B1
-#define INVNTS_TPDO2_ID 0x2B1
 #define INVNTS_TPDO3_ID 0x3B1
-#define INVNTS_TPDO4_ID 0x4B1
+#define INVNTS_CELL_VOLTS_ID 0x3B2
 #define INVNTS_SDO_RESP_ID 0x5B1
 
 #define INVNTS_MUX_1 0x01
@@ -33,13 +31,13 @@
 
 typedef enum
 {
-  CT_INVNTS_80AH_LOST_DELAY,
-  NUM_INVNTS_80AH_TIMERS,
-  FIRST_INVNTS_80AH_TIMER = 0
-} INVNTS_80AH_TIMERS;
+  CT_INVNTS_LOST_DELAY,
+  NUM_INVNTS_TIMERS,
+  FIRST_INVNTS_TIMER = 0
+} INVNTS_TIMERS;
 
-void initInvnts80AhCAN(void);
-void recInvnts80AhStatus(CANMessage message);
-int Invnts80AhCANok(void);
-void Invnts80AhSDOReadReq(int);
-void Invnts80AhSDOWriteReq(int, int);
+void initInvntsOldCAN(void);
+void recInvntsOldStatus(CANMessage message);
+int InvntsOldCANok(void);
+void InvntsOldSDOReadReq(int);
+void InvntsOldSDOWriteReq(int, int);

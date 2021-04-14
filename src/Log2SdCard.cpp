@@ -10,6 +10,8 @@
 #include "Serial_El_Load.h"
 #include "Display.h"
 #include "DeltaQ_CANopen.h"
+#include "InvntsOldCAN.h"
+#include "Invnts60AhCAN.h"
 #include "Invnts80AhCAN.h"
 
 
@@ -152,6 +154,12 @@ void initSDcard(void){
               else if (fieldSubStringValue == "VALENCE_R3"){
                 battType = VALENCE_REV3;
               }
+              else if (fieldSubStringValue == "INVNTS_OLD"){
+                battType = INVNTS_OLD;
+              }
+              else if (fieldSubStringValue == "INVNTS_60AH"){
+                battType = INVNTS_60AH;
+              }
               else if (fieldSubStringValue == "INVNTS_80AH"){
                 battType = INVNTS_80AH;
               }
@@ -240,6 +248,12 @@ void openReadWriteFiles(int what2log){
   }
   else if (battType == CUMMINS_REV1){
     tempBattType = "BRAMR1";
+  }
+  else if (battType == INVNTS_OLD){
+    tempBattType = "INVNTSOLD";
+  }
+  else if (battType == INVNTS_60AH){
+    tempBattType = "INVNTS60AH";
   }
   else if (battType == INVNTS_80AH){
     tempBattType = "INVNTS80AH";
@@ -518,6 +532,32 @@ void Log2SD(int what2log){
             BMS_t_prev = Time.now();
           }
         }
+        else if (battType == INVNTS_OLD){
+          if (InvntsOldCANok()){
+            fCombinedModuleVolts = battVoltage;
+            cumlAmpHrs = cumlAmpHrs + ampHours;
+            cumlWattHrs = cumlWattHrs + wattHours;
+            // if the file opened okay, write to it:
+            myFile.printf("#BMS,%d,%d,INVNTS_OLD,%d,%.3f,%.1f,%d,%d,%.2f,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%.1f,%.1f,%d,%.1f,%.1f,%d,%d\n"
+            ,Time.now(),interval,BMSstatusWord,fCombinedModuleVolts,battCurrent,moduleMinTemperature,moduleMaxTemperature,moduleSOCscale,battCell1mv,battCell2mv,battCell3mv,battCell4mv,battCell5mv,battCell6mv,battCell7mv,battCell8mv,ampHours,cumlAmpHrs,wattHours,cumlWattHrs,maxDischargeCurrent,maxRegenCurrent,battSN,BMSchargeCurrSetpoint,BMSchargeVoltSetpoint,InvntsSOH,InvntsHeaterStat);
+            ampHours = 0;
+            wattHours = 0;
+            BMS_t_prev = Time.now();
+          }
+        }
+        else if (battType == INVNTS_60AH){
+          if (Invnts60AhCANok()){
+            fCombinedModuleVolts = battVoltage;
+            cumlAmpHrs = cumlAmpHrs + ampHours;
+            cumlWattHrs = cumlWattHrs + wattHours;
+            // if the file opened okay, write to it:
+            myFile.printf("#BMS,%d,%d,INVNTS_60AH,%d,%.3f,%.1f,%d,%d,%.2f,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%.1f,%.1f,%d,%.1f,%.1f,%d,%d\n"
+            ,Time.now(),interval,BMSstatusWord,fCombinedModuleVolts,battCurrent,moduleMinTemperature,moduleMaxTemperature,moduleSOCscale,battCell1mv,battCell2mv,battCell3mv,battCell4mv,battCell5mv,battCell6mv,battCell7mv,battCell8mv,ampHours,cumlAmpHrs,wattHours,cumlWattHrs,maxDischargeCurrent,maxRegenCurrent,battSN,BMSchargeCurrSetpoint,BMSchargeVoltSetpoint,InvntsSOH,InvntsHeaterStat);
+            ampHours = 0;
+            wattHours = 0;
+            BMS_t_prev = Time.now();
+          }
+        }
         else if (battType == INVNTS_80AH){
           if (Invnts80AhCANok()){
             fCombinedModuleVolts = battVoltage;
@@ -696,7 +736,19 @@ void ReadFrameLine(void){
             IC1200Enable = 1;
             setIC1200Current = (NextLoadFrame.Power/battVoltage)+0.5;
             setIC1200Voltage = 32;
-            if (battType == INVNTS_80AH){
+            if (battType == INVNTS_OLD){
+              DQchargerEnable = 1;
+              setDQVoltage = setIC1200Voltage;
+              setDQCurrent = setIC1200Current;
+              transmitRPDO1();
+            }
+            else if (battType == INVNTS_60AH){
+              DQchargerEnable = 1;
+              setDQVoltage = setIC1200Voltage;
+              setDQCurrent = setIC1200Current;
+              transmitRPDO1();
+            }
+            else if (battType == INVNTS_80AH){
               DQchargerEnable = 1;
               setDQVoltage = setIC1200Voltage;
               setDQCurrent = setIC1200Current;
@@ -710,7 +762,19 @@ void ReadFrameLine(void){
             IC1200Enable = 0;
             setIC1200Current = 0;
             setIC1200Voltage = 0;
-            if (battType == INVNTS_80AH){
+            if (battType == INVNTS_OLD){
+              DQchargerEnable = 0;
+              setDQVoltage = setIC1200Voltage;
+              setDQCurrent = setIC1200Current;
+              transmitRPDO1();
+            }
+            else if (battType == INVNTS_60AH){
+              DQchargerEnable = 0;
+              setDQVoltage = setIC1200Voltage;
+              setDQCurrent = setIC1200Current;
+              transmitRPDO1();
+            }
+            else if (battType == INVNTS_80AH){
               DQchargerEnable = 0;
               setDQVoltage = setIC1200Voltage;
               setDQCurrent = setIC1200Current;
