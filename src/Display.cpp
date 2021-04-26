@@ -295,7 +295,7 @@ void dispBatteryTemps(void){
     tempSpaces.concat(" ");
   }
   tft.setTextColor(ILI9341_WHITE,ILI9341_BLACK);
-  tempString = String::format("%d",moduleMinTemperature);
+  tempString = String::format("%.0f",moduleMinTemperature);
   tft.setCursor(XMINTEMP, YMINTEMP); tft.setTextSize(3);
   tempSpaces.concat(tempString); tempSpaces.concat(" C");
   tft.print(tempSpaces);
@@ -314,7 +314,7 @@ void dispBatteryTemps(void){
   if (moduleMaxTemperature >= 0){
     tempSpaces.concat(" ");
   }
-  tempString = String::format("%d",moduleMaxTemperature);
+  tempString = String::format("%.0f",moduleMaxTemperature);
   tft.setCursor(XMAXTEMP, YMAXTEMP); tft.setTextSize(3);
   tempSpaces.concat(tempString); tempSpaces.concat(" C");
   tft.print(tempSpaces);
@@ -549,7 +549,7 @@ void dispBattery(){
   if (moduleMinTemperature >= 0){
     tempSpaces.concat(" ");
   }
-  tempString = String::format("%d",moduleMinTemperature);
+  tempString = String::format("%.0f",moduleMinTemperature);
   tft.setCursor(XMINTEMP, YMINTEMP); tft.setTextSize(3);
   tempSpaces.concat(tempString); tempSpaces.concat(" C");
   tft.print(tempSpaces);
@@ -568,7 +568,7 @@ void dispBattery(){
   if (moduleMaxTemperature >= 0){
     tempSpaces.concat(" ");
   }
-  tempString = String::format("%d",moduleMaxTemperature);
+  tempString = String::format("%.0f",moduleMaxTemperature);
   tft.setCursor(XMAXTEMP, YMAXTEMP); tft.setTextSize(3);
   tempSpaces.concat(tempString); tempSpaces.concat(" C");
   tft.print(tempSpaces);

@@ -138,16 +138,16 @@ void CycleTest(void){
   heaterState2String = heaterStateStrings[heaterState]; //set the exposed particle variable to the heater state string
   //float fCellsDeltaV = (float)(cellsDeltaV/1000);
   //cellsDeltaV2String = String::format("%d",cellsDeltaV);
-  cellMinVoltsString = String::format("%d", moduleMinMvolts);
-  cellMaxVoltsString = String::format("%d", moduleMaxMvolts);
-  battMaxTemp2String = String::format("%d", moduleMaxTemperature);
-  battMinTemp2String = String::format("%d", moduleMinTemperature);
+  cellMinVoltsString = String::format("%.3f", moduleMinMvolts);
+  cellMaxVoltsString = String::format("%.3f", moduleMaxMvolts);
+  battMaxTemp2String = String::format("%.1f", moduleMaxTemperature);
+  battMinTemp2String = String::format("%.1f", moduleMinTemperature);
   //cellsDeltaV = moduleMaxMvolts - moduleMinMvolts;
   battSOC2String = String::format("%.2f", moduleSOCscale);
   battVolt2String = String::format("%.3f", battVoltage);
   battCurr2String = String::format("%.1f", battCurrent);
 
-  int DQcurrentSetpoint = 0;
+  float DQcurrentSetpoint = 0;
   maxSurfTempReturned = maxCSMSurfaceTemp();
 
   manageSDLogging();
