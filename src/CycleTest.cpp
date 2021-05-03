@@ -49,6 +49,7 @@ String battMaxTemp2String;
 String battSOC2String;
 String battVolt2String;
 String ok2ChargeStatus;
+String ok2DischargeStatus;
 String heaterState2String = "heaterOFF";
 String heaterStatus2String;
 String cellsDeltaV2String;
@@ -95,6 +96,7 @@ void initCycleTest(void){
   Particle.function("SetChrgVolt",fSetChrgVolt);
   Particle.function("ElLoadString",fElLoadString);
   Particle.variable("OkToCharge", ok2ChargeStatus);
+  Particle.variable("okToDischarge", ok2DischargeStatus);
   Particle.variable("HeaterState", heaterState2String);
   Particle.variable("HeaterStatus", heaterStatus2String);
   Particle.variable("StateMachine", testState2String);
@@ -164,6 +166,9 @@ void CycleTest(void){
 
   int tempOk2ChargeStatus = okToCharge();
   ok2ChargeStatus = String::format("%d",tempOk2ChargeStatus);
+
+  int tempOk2DischargeStatus = okToDischarge();
+  ok2DischargeStatus = String::format("%d",tempOk2DischargeStatus);
 
   if (battType == VALENCE_REV3){
     //-------------- HEATER SAFETY SHUTDOWN CHECK ----------------
@@ -458,7 +463,7 @@ void CycleTest(void){
         }
       }
       else if (battType == INVNTS_80AH){
-        if (moduleSOCscale >= maxChargePercent){
+        if ((moduleSOCscale >= maxChargePercent)||(okToCharge() == 6)){
           testState = statePOWERRESETCHRGOFF;
         }
         else if (okToCharge() == 1){
@@ -497,6 +502,9 @@ void CycleTest(void){
     case stateSTARTDISCHARGE:     //6
       cumlAmpHrs = 0;
       cumlWattHrs = 0;
+      if (okToDischarge() == 15){
+        break;
+      }
       if (dischargerType == SD_REPLAY){
         //configure discharger for replicating list read from SD card
         RestartFrameFileLines();
@@ -549,7 +557,9 @@ void CycleTest(void){
       }
       else if(battType == INVNTS_80AH){
         //Serial.println(okToDischarge());
+        
         if (okToDischarge() != 1){
+
           testState = stateDISCHARGE_INPUTOFF;
         }
       }  
@@ -742,7 +752,7 @@ void CycleTest(void){
         }
       }
       else if (battType == INVNTS_80AH){
-        if (moduleSOCscale >= maxChargePercent){  //(chargeStatus==COMPLETE) //(moduleSOCscale > 95.0)
+        if ((moduleSOCscale >= maxChargePercent)||(okToCharge() == 6)){  //(chargeStatus==COMPLETE) //(moduleSOCscale > 95.0)
           testState = stateENDOFCHRG;
         }
         else if (okToCharge() == 1){
@@ -1135,9 +1145,9 @@ int okToDischarge(void){
   else if ((battTerminalOverTempStatus > ALARM) && (otherDischargeFaultStatus > ALARM)){
     return 5;
   }
-  else if (overVoltageStatus > ALARM){
-    return 6;
-  }
+  //else if (overVoltageStatus > ALARM){
+    //return 6;                               //over voltage is not a problem for discharging
+  //}
   else if (underVoltageStatus >= ALARM){
     return 7;
   }
