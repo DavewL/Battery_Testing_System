@@ -63,7 +63,11 @@ void receiveMesDQCANopen(CANMessage message){
       DQcurrent = IC1200current;
       DQvoltage = IC1200voltage;
     }
-
+    if (battType == INVNTS_VIRT_BATT){
+      DQwallPluggedIn = IC1200wallPluggedIn;
+      DQcurrent = IC1200current;
+      DQvoltage = IC1200voltage;
+    }
   }
 }
 

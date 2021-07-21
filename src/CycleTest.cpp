@@ -12,6 +12,7 @@
 #include "InvntsOldCAN.h"
 #include "Invnts60AhCAN.h"
 #include "Invnts80AhCAN.h"
+#include "InvntsVirtualBattCAN.h"
 
 static const unsigned int scawCycleTestTimers[NUM_CYCLE_TIMERS] =
 {
@@ -79,6 +80,7 @@ void manageSDLogging(void);
 int fElLoadString(String command){
   Serial1.println(command);
   Serial.println(command);
+  return 1;
 }
 
 
@@ -125,6 +127,9 @@ void initCycleTest(void){
     pinMode(INVNTS_DISCHRG, OUTPUT);
   }
   else if (battType == INVNTS_80AH){
+    pinMode(INVNTS_DISCHRG, OUTPUT);
+  }
+  else if (battType == INVNTS_VIRT_BATT){
     pinMode(INVNTS_DISCHRG, OUTPUT);
   }
 
@@ -227,6 +232,12 @@ void CycleTest(void){
         digitalWrite(CHARGE_EN, HIGH);
         rechargeOff();
       }
+      else if (battType == INVNTS_VIRT_BATT){
+        heaterState = heaterDisabled;
+        digitalWrite(INVNTS_DISCHRG, HIGH);
+        digitalWrite(CHARGE_EN, HIGH);
+        rechargeOff();
+      }
 
       initSerialElLoad();
       if (readFrameFileExists == 1){
@@ -258,6 +269,9 @@ void CycleTest(void){
       else if (battType == INVNTS_80AH){
         //heaterState = heaterDisabled;
       }
+      else if (battType == INVNTS_VIRT_BATT){
+        //heaterState = heaterDisabled;
+      }
 
       testState = statePOWERRESETCHRGON;
       break;
@@ -274,6 +288,11 @@ void CycleTest(void){
         setIC1200Voltage = 0;
       }
       else if (battType != INVNTS_80AH){
+        IC1200Enable = 0;
+        setIC1200Current = 0;
+        setIC1200Voltage = 0;
+      }
+       else if (battType != INVNTS_VIRT_BATT){
         IC1200Enable = 0;
         setIC1200Current = 0;
         setIC1200Voltage = 0;
@@ -408,6 +427,33 @@ void CycleTest(void){
           testState = stateERRORHALT;
         }
       }
+      else if (battType == INVNTS_VIRT_BATT){
+        if (InvntsVirtualBattCANok()){
+          if (moduleSOCscale < maxChargePercent){
+            if (okToCharge() == 1){     //ok to charge
+              rechargeOn();
+              testState = statePOWERRESET_CHARGE;  //start charging
+            }
+            else if(okToCharge() == 2){ //too cold to charge yet
+              rechargeOff();
+              testState = statePOWERRESET_CHARGE;
+            }
+
+            else{
+              rechargeOff();
+              testState = stateERRORHALT; //something is wrong that prevents charging
+            }
+          }
+          else {
+            rechargeOff();
+            testState = stateSTARTDISCHARGE;
+          }
+        }
+        else {
+          rechargeOff();
+          testState = stateERRORHALT;
+        }
+      }
       else{
         testState = stateERRORHALT;
       }
@@ -476,6 +522,20 @@ void CycleTest(void){
           testState = stateERRORHALT;
         }
       }
+      else if (battType == INVNTS_VIRT_BATT){
+        if ((moduleSOCscale >= maxChargePercent)||(okToCharge() == 6)){
+          testState = statePOWERRESETCHRGOFF;
+        }
+        else if (okToCharge() == 1){
+          rechargeOn();
+        }
+        else if (okToCharge() == 2){
+          rechargeOn();
+        }
+        else{
+          testState = stateERRORHALT;
+        }
+      }
       break;
 
     case statePOWERRESETCHRGOFF:  //5
@@ -493,6 +553,11 @@ void CycleTest(void){
         }
       }
       else if (battType == INVNTS_80AH){
+        if (okToDischarge() == 15){
+          testState = statePOWERRESETCHRGOFF;
+        }
+      }
+      else if (battType == INVNTS_VIRT_BATT){
         if (okToDischarge() == 15){
           testState = statePOWERRESETCHRGOFF;
         }
@@ -562,7 +627,15 @@ void CycleTest(void){
 
           testState = stateDISCHARGE_INPUTOFF;
         }
-      }  
+      }
+      else if(battType == INVNTS_VIRT_BATT){
+        //Serial.println(okToDischarge());
+        
+        if (okToDischarge() != 1){
+
+          testState = stateDISCHARGE_INPUTOFF;
+        }
+      }
       break;
 
     case stateDISCHARGE_INPUTOFF: //8
@@ -586,6 +659,10 @@ void CycleTest(void){
         rechargeOn();
       }
       else if (battType == INVNTS_80AH){
+        //digitalWrite(INVNTS_DISCHRG, LOW);
+        rechargeOn();
+      }
+      else if (battType == INVNTS_VIRT_BATT){
         //digitalWrite(INVNTS_DISCHRG, LOW);
         rechargeOn();
       }
@@ -700,6 +777,28 @@ void CycleTest(void){
           }
         }
       }
+      else if (battType == INVNTS_VIRT_BATT){
+        if (InvntsVirtualBattCANok()){
+          if (moduleSOCscale < maxChargePercent){
+            if (okToCharge() == 1){     //ok to charge
+              rechargeOn();
+              testState = stateCHARGE;  //start charging
+            }
+            else if(okToCharge() == 2){ //too cold to charge yet
+              rechargeOff();
+              testState = stateCHARGE;
+            }
+            else{
+              rechargeOff();
+              testState = stateERRORHALT; //something is wrong that prevents charging
+            }
+          }
+          else {
+            rechargeOff();
+            testState = stateSTARTDISCHARGE;
+          }
+        }
+      }
       break;
 
     case  stateCHARGE:                //10
@@ -765,6 +864,20 @@ void CycleTest(void){
           testState = stateERRORHALT;
         }
       }
+      else if (battType == INVNTS_VIRT_BATT){
+        if ((moduleSOCscale >= maxChargePercent)||(okToCharge() == 6)){  //(chargeStatus==COMPLETE) //(moduleSOCscale > 95.0)
+          testState = stateENDOFCHRG;
+        }
+        else if (okToCharge() == 1){
+          rechargeOn();
+        }
+        else if (okToCharge() == 2){
+          rechargeOn();
+        }
+        else{
+          testState = stateERRORHALT;
+        }
+      }
       break;
 
     case  stateENDOFCHRG:             //11
@@ -781,6 +894,11 @@ void CycleTest(void){
         }
       }
       if (battType == INVNTS_80AH){
+        if (okToDischarge() == 15){
+          testState = stateENDOFCHRG;
+        }
+      }
+      if (battType == INVNTS_VIRT_BATT){
         if (okToDischarge() == 15){
           testState = stateENDOFCHRG;
         }
@@ -831,7 +949,7 @@ void CycleTest(void){
 //change delta-q settings to additive current based on known loads and expected voltage
   //----------------------------   MANAGE DELTA-Q SETTINGS    -------------------------------------------------------//
   DQcurrentSetpoint = 0.0;
-  if ((battType == INVNTS_80AH)&&(InvntsHeaterStat==1)){
+  if ((battType == INVNTS_VIRT_BATT)&&(InvntsHeaterStat==1)){
     DQcurrentSetpoint += 8;
   }
   else {
@@ -890,6 +1008,17 @@ void CycleTest(void){
       }
     }
     else if (battType == INVNTS_80AH){
+      if((moduleMaxMvolts>3550)&&(DQcurrentSetpoint > 7)){
+        DQcurrentSetpoint = 7;
+      }
+      if((moduleMaxMvolts>3520)&&(DQcurrentSetpoint > 15)){
+        DQcurrentSetpoint = 15;
+      }
+      //if (moduleMaxMvolts<3490){                    //commented out to allow heater offset to function correctly
+        //DQcurrentSetpoint = BMSchargeCurrSetpoint;
+      //}
+    }
+    else if (battType == INVNTS_VIRT_BATT){
       if((moduleMaxMvolts>3550)&&(DQcurrentSetpoint > 7)){
         DQcurrentSetpoint = 7;
       }
@@ -1024,6 +1153,11 @@ void rechargeOn(void)
     digitalWrite(INVNTS_DISCHRG, LOW);
     rechargeState = 1;
   }
+  else if (battType == INVNTS_VIRT_BATT){
+    digitalWrite(CHARGE_EN, HIGH);
+    digitalWrite(INVNTS_DISCHRG, LOW);
+    rechargeState = 1;
+  }
   else if (moduleMinTemperature > CHARGE_MIN_TEMP){
     digitalWrite(CHARGE_EN, HIGH);
     digitalWrite(INVNTS_DISCHRG, LOW);
@@ -1043,6 +1177,9 @@ void rechargeOff(void)
     digitalWrite(INVNTS_DISCHRG, HIGH);
   }
   if (battType == INVNTS_80AH){
+    digitalWrite(INVNTS_DISCHRG, HIGH);
+  }
+  if (battType == INVNTS_VIRT_BATT){
     digitalWrite(INVNTS_DISCHRG, HIGH);
   }
   digitalWrite(CHARGE_EN, LOW);  //low
@@ -1160,7 +1297,7 @@ int okToDischarge(void){
   else if (ModuleLostState > ALARM){
     return 10;
   }
-  else if ((BMSrev3CANok() == 0)&&(InvntsOldCANok() == 0)&&(Invnts60AhCANok() == 0)&&(Invnts80AhCANok() == 0)){
+  else if ((BMSrev3CANok() == 0)&&(InvntsOldCANok() == 0)&&(Invnts60AhCANok() == 0)&&(Invnts80AhCANok() == 0)&&(InvntsVirtualBattCANok() == 0)){
     return 11;
   }
   else if (moduleMinTemperature <= DISCHARGE_MIN_TEMP){
@@ -1179,16 +1316,17 @@ int okToDischarge(void){
       return 14;
     }
   }
-  else if (((battType == INVNTS_OLD) || (battType == INVNTS_60AH) || (battType == INVNTS_80AH))&&(maxDischargeCurrent == 0)){
+  else if (((battType == INVNTS_OLD) || (battType == INVNTS_60AH) || (battType == INVNTS_80AH)||(battType == INVNTS_VIRT_BATT))&&(maxDischargeCurrent == 0)){
     return 15;
   }
-  else if (((battType == INVNTS_OLD) || (battType == INVNTS_60AH) || (battType == INVNTS_80AH))&&(moduleSOCscale <= minDischargePercent)){
+  else if (((battType == INVNTS_OLD) || (battType == INVNTS_60AH) || (battType == INVNTS_80AH)||(battType == INVNTS_VIRT_BATT))&&(moduleSOCscale <= minDischargePercent)){
     return 16;
   }
   else{
     contactorStatFlag = 0;
     return 1;
   }
+  return -1;
 }
 
 int okToCharge(void){
@@ -1204,6 +1342,11 @@ int okToCharge(void){
       }
     }
     else if (battType == INVNTS_80AH){
+      if ((BMSchargeCurrSetpoint > 0)|| (InvntsHeaterStat==1)){ //BMSchargeCurrSetpoint > 0
+        BMSchargeVoltSetpoint = 30.4;
+      }
+    }
+    else if (battType == INVNTS_VIRT_BATT){
       if ((BMSchargeCurrSetpoint > 0)|| (InvntsHeaterStat==1)){ //BMSchargeCurrSetpoint > 0
         BMSchargeVoltSetpoint = 30.4;
       }
@@ -1231,7 +1374,7 @@ int okToCharge(void){
   else if (ModuleLostState > ALARM){
     return 9;
   }
-  else if ((BMSrev3CANok() != 1)||(InvntsOldCANok() != 1)||(Invnts60AhCANok() != 1)||(Invnts80AhCANok() != 1)){
+  else if ((BMSrev3CANok() != 1)||(InvntsOldCANok() != 1)||(Invnts60AhCANok() != 1)||(Invnts80AhCANok() != 1)||(InvntsVirtualBattCANok() != 1)){
     return 10;
   }
   else if (moduleMinTemperature <= CHARGE_MIN_TEMP){
@@ -1252,6 +1395,11 @@ int okToCharge(void){
       }
     }
     else if (battType == INVNTS_80AH){
+      if ((BMSchargeCurrSetpoint > 0) || (InvntsHeaterStat==1)){  //BMSchargeCurrSetpoint > 0
+        BMSchargeVoltSetpoint = 30.4;
+      }
+    }
+    else if (battType == INVNTS_VIRT_BATT){
       if ((BMSchargeCurrSetpoint > 0) || (InvntsHeaterStat==1)){  //BMSchargeCurrSetpoint > 0
         BMSchargeVoltSetpoint = 30.4;
       }
@@ -1296,6 +1444,10 @@ void turnHeaterOn(void){
     //InvntsSDOWriteReq(INVNTS_HEATER_CONTROL_SUBINDEX, 1);
     //heaterStatus = 1;
   }
+  else if (battType == INVNTS_VIRT_BATT){
+    //InvntsSDOWriteReq(INVNTS_HEATER_CONTROL_SUBINDEX, 1);
+    //heaterStatus = 1;
+  }
 }
 
 void turnHeaterOff(void){
@@ -1312,6 +1464,10 @@ void turnHeaterOff(void){
     //heaterStatus = 0;
   }
   if (battType == INVNTS_80AH){
+    //InvntsSDOWriteReq(INVNTS_HEATER_CONTROL_SUBINDEX, 0);
+    //heaterStatus = 0;
+  }
+  if (battType == INVNTS_VIRT_BATT){
     //InvntsSDOWriteReq(INVNTS_HEATER_CONTROL_SUBINDEX, 0);
     //heaterStatus = 0;
   }
@@ -1343,6 +1499,14 @@ void manageHeaterEnabled(void){
     }
   }
   else if (battType == INVNTS_80AH){
+    if (moduleMinTemperature <= CHRGR_PWR_HEATER_ON_CELL_TEMP){
+      turnHeaterOn();
+    }
+    else if (moduleMinTemperature > CHRGR_PWR_HEATER_OFF_CELL_TEMP){
+      turnHeaterOff();
+    }
+  }
+  else if (battType == INVNTS_VIRT_BATT){
     if (moduleMinTemperature <= CHRGR_PWR_HEATER_ON_CELL_TEMP){
       turnHeaterOn();
     }

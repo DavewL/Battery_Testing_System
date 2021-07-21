@@ -10,6 +10,7 @@
 #include "InvntsOldCAN.h"
 #include "Invnts60AhCAN.h"
 #include "Invnts80AhCAN.h"
+#include "InvntsVirtualBattCAN.h"
 
 int msgRec = 1;
 
@@ -54,6 +55,13 @@ int canReceiveMessage(){
     }
     else if (battType == INVNTS_80AH){
       recInvnts80AhStatus(message);   //DECODE INVNTS MESSAGES
+      receiveCSMtemps(message);       //DECODE CSM TEMPERATURE MESSAGES
+      receiveMesDQCANopen(message);   //DECODE DELTA-Q CANOPEN MESSAGES}
+    //receiveMessagesTraction();  //DECODE TRACTION MESSAGES
+    //receiveMessagesVCU();       //DECODE VCU MESSAGES
+    }
+    else if (battType == INVNTS_VIRT_BATT){
+      recInvntsVirtualBattStatus(message);   //DECODE INVNTS MESSAGES
       receiveCSMtemps(message);       //DECODE CSM TEMPERATURE MESSAGES
       receiveMesDQCANopen(message);   //DECODE DELTA-Q CANOPEN MESSAGES}
     //receiveMessagesTraction();  //DECODE TRACTION MESSAGES

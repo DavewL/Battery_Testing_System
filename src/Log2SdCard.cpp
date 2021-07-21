@@ -13,6 +13,7 @@
 #include "InvntsOldCAN.h"
 #include "Invnts60AhCAN.h"
 #include "Invnts80AhCAN.h"
+#include "InvntsVirtualBattCAN.h"
 
 
 //SD file declarations-----------------------------------
@@ -163,6 +164,9 @@ void initSDcard(void){
               else if (fieldSubStringValue == "INVNTS_80AH"){
                 battType = INVNTS_80AH;
               }
+              else if (fieldSubStringValue == "INVNTS_VIRT_BATT"){
+                battType = INVNTS_VIRT_BATT;
+              }
               else{
                 battType = UNKNOWN_BATT;
               }
@@ -257,6 +261,9 @@ void openReadWriteFiles(int what2log){
   }
   else if (battType == INVNTS_80AH){
     tempBattType = "INVNTS80AH";
+  }
+  else if (battType == INVNTS_VIRT_BATT){
+    tempBattType = "INVNTSVIRTBATT";
   }
   strFileName = String::format("%d_BATT_SN_",Time.now());
   Serial.println(strFileName);
@@ -571,6 +578,19 @@ void Log2SD(int what2log){
             BMS_t_prev = Time.now();
           }
         }
+        else if (battType == INVNTS_VIRT_BATT){
+          if (InvntsVirtualBattCANok()){
+            fCombinedModuleVolts = battVoltage;
+            cumlAmpHrs = cumlAmpHrs + ampHours;
+            cumlWattHrs = cumlWattHrs + wattHours;
+            // if the file opened okay, write to it:
+            myFile.printf("#BMS,%d,%d,INVNTS_VIRT_BATT,%d,%.3f,%.1f,%d,%d,%.2f,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%.1f,%.1f,%d,%.1f,%.1f,%d,%d\n"
+            ,Time.now(),interval,BMSstatusWord,fCombinedModuleVolts,battCurrent,moduleMinTemperature,moduleMaxTemperature,moduleSOCscale,battCell1mv,battCell2mv,battCell3mv,battCell4mv,battCell5mv,battCell6mv,battCell7mv,battCell8mv,ampHours,cumlAmpHrs,wattHours,cumlWattHrs,maxDischargeCurrent,maxRegenCurrent,battSN,BMSchargeCurrSetpoint,BMSchargeVoltSetpoint,InvntsSOH,InvntsHeaterStat);
+            ampHours = 0;
+            wattHours = 0;
+            BMS_t_prev = Time.now();
+          }
+        }
       }
       if (TRAClogging == 1){
         interval = Time.now()-TRAC_t_prev;
@@ -754,6 +774,12 @@ void ReadFrameLine(void){
               setDQCurrent = setIC1200Current;
               transmitRPDO1();
             }
+            else if (battType == INVNTS_VIRT_BATT){
+              DQchargerEnable = 1;
+              setDQVoltage = setIC1200Voltage;
+              setDQCurrent = setIC1200Current;
+              transmitRPDO1();
+            }
             else{
               transmitIC1200VoltsAmps();
             }
@@ -775,6 +801,12 @@ void ReadFrameLine(void){
               transmitRPDO1();
             }
             else if (battType == INVNTS_80AH){
+              DQchargerEnable = 0;
+              setDQVoltage = setIC1200Voltage;
+              setDQCurrent = setIC1200Current;
+              transmitRPDO1();
+            }
+            else if (battType == INVNTS_VIRT_BATT){
               DQchargerEnable = 0;
               setDQVoltage = setIC1200Voltage;
               setDQCurrent = setIC1200Current;

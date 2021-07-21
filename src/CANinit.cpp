@@ -6,6 +6,7 @@
 #include "InvntsOldCAN.h"
 #include "Invnts60AhCAN.h"
 #include "Invnts80AhCAN.h"
+#include "InvntsVirtualBattCAN.h"
 
 #include <carloop.h>
 
@@ -35,7 +36,10 @@ void initCAN(void){
       carloop.setCANSpeed(INVNTS_BAUD);        //must set can speed before enabling bus!
       initInvnts80AhCAN();
     }
-
+    else if (battType == INVNTS_VIRT_BATT){
+      carloop.setCANSpeed(INVNTS_BAUD);        //must set can speed before enabling bus!
+      initInvntsVirtualBattCAN();
+    }
     else{
       carloop.setCANSpeed(VALENCE_BAUD);        //must set can speed before enabling bus!
       //initValR3CAN();

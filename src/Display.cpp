@@ -10,6 +10,8 @@
 #include "InvntsOldCAN.h"
 #include "Invnts60AhCAN.h"
 #include "Invnts80AhCAN.h"
+#include "InvntsVirtualBattCAN.h"
+
 
 extern ElLoadFrame CurrLoadFrame;
 
@@ -131,6 +133,14 @@ void dispBatteryStats(){
   }
   else if (battType == INVNTS_80AH){
     if (Invnts80AhCANok()){
+      CANok = 1;
+    }
+    else{
+      CANok = 0;
+    }
+  }
+  else if (battType == INVNTS_VIRT_BATT){
+    if (InvntsVirtualBattCANok()){
       CANok = 1;
     }
     else{
@@ -493,6 +503,12 @@ void dispBattery(){
     }
   }
   else if (battType == INVNTS_80AH){
+    if (Invnts80AhCANok()){
+      tempCANstatus = "   INVNTUS CAN OK";
+      tft.setTextColor(ILI9341_BLACK,ILI9341_GREEN);
+    }
+  }
+  else if (battType == INVNTS_VIRT_BATT){
     if (Invnts80AhCANok()){
       tempCANstatus = "   INVNTUS CAN OK";
       tft.setTextColor(ILI9341_BLACK,ILI9341_GREEN);

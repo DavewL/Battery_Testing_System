@@ -16,6 +16,8 @@
 #include "InvntsOldCAN.h"
 #include "Invnts60AhCAN.h"
 #include "Invnts80AhCAN.h"
+#include "InvntsVirtualBattCAN.h"
+
 
 int OneSecCounter = 0; //used to run a 1 second timer
 int TwoSecCounter = 0;
@@ -153,6 +155,15 @@ void Tasks160ms(){
       Invnts80AhSDOReadReq(INVNTS_HEATER_STATUS_SUBINDEX);
       //Invnts80AhSDOReadReq(INVNTS_MIN_CELL_TEMP);
       //Invnts80AhSDOReadReq(INVNTS_MAX_CELL_TEMP);
+    }
+    else if (battType == INVNTS_VIRT_BATT){
+      transmitRPDO1();
+      //InvntsVirtualBattSDOReadReq(INVNTS_VOLTS_SUBINDEX);
+      //InvntsVirtualBattSDOReadReq(INVNTS_CURRENT_SUBINDEX);
+      //InvntsVirtualBattSDOReadReq(INVNTS_CHRG_STATUS_SUBINDEX);
+      InvntsVirtualBattSDOReadReq(INVNTS_HEATER_STATUS_SUBINDEX);
+      //InvntsVirtualBattSDOReadReq(INVNTS_MIN_CELL_TEMP);
+      //InvntsVirtualBattSDOReadReq(INVNTS_MAX_CELL_TEMP);
     }
   }
 }

@@ -54,6 +54,7 @@
 #define INVNTS_OLD (4)
 #define INVNTS_60AH (5)
 #define INVNTS_80AH (6)
+#define INVNTS_VIRT_BATT (7)
 
 //TEST TYPE defines
 #define CYCLE (1)
