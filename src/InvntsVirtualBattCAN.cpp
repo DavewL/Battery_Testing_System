@@ -33,9 +33,34 @@ void recInvntsVirtualBattStatus(CANMessage message){
   if (message.id == INVNTS_TPDO1_ID){
     ResetInvntsTimer(CT_INVNTS_VIRT_BATT_LOST_DELAY);
     nowMillis = millis();
-    
-    moduleSOCscale = (float)message.data[0];  //SOC %
-    InvntsSOH = (int)message.data[1];
+    moduleSOCscale = (float)message.data[1];  //SOC %
+  }
+
+  else if (message.id == INVNTS_TPDO2_ID){
+    ResetInvntsTimer(CT_INVNTS_VIRT_BATT_LOST_DELAY);
+    nowMillis = millis();
+
+    battVoltage = (float)((uint16_t)((message.data[1]<<8)|(message.data[0]<<0)))*0.001; //voltage
+    battCurrent = (float)((int16_t)((message.data[3]<<8)|(message.data[2]<<0)))/10;  //current
+    if (battVoltage > 0){
+        deltaMillis = nowMillis - prevMillis;
+        prevMillis = nowMillis;
+        tempAmpSeconds = battCurrent * ((float)deltaMillis/1000);
+        ampHours = ampHours + (tempAmpSeconds/3600);
+        tempWattSeconds = battVoltage * tempAmpSeconds;
+        //cumlAmpHrs = cumlAmpHrs + ampHours;
+        wattHours = wattHours + (tempWattSeconds/3600);
+      }
+    maxDischargeCurrent = (float)((uint16_t)((message.data[7]<<8)|(message.data[6]<<0)))/10; 
+    maxRegenCurrent = (float)((uint16_t)((message.data[3]<<8)|(message.data[2]<<0)))/100;
+    BMSchargeCurrSetpoint = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))/100;
+  }
+
+  else if (message.id == INVNTS_TPDO4_ID){
+    ResetInvntsTimer(CT_INVNTS_VIRT_BATT_LOST_DELAY);
+    nowMillis = millis();
+
+    InvntsSOH = (int)message.data[0];   
     
     //Serial.println(BMSchargeCurrSetpoint);
    
@@ -84,24 +109,6 @@ void recInvntsVirtualBattStatus(CANMessage message){
       //moduleMinTemperature = moduleMaxTemperature;
   }
 
-  else if (message.id == INVNTS_TPDO2_ID){
-      ResetInvntsTimer(CT_INVNTS_VIRT_BATT_LOST_DELAY);
-      nowMillis = millis();
-
-      battCurrent = (float)((int16_t)((message.data[1]<<8)|(message.data[0]<<0)))/100;  //      
-      if (battVoltage > 0){
-          deltaMillis = nowMillis - prevMillis;
-          prevMillis = nowMillis;
-          tempAmpSeconds = battCurrent * ((float)deltaMillis/1000);
-          ampHours = ampHours + (tempAmpSeconds/3600);
-          tempWattSeconds = battVoltage * tempAmpSeconds;
-          //cumlAmpHrs = cumlAmpHrs + ampHours;
-          wattHours = wattHours + (tempWattSeconds/3600);
-        } 
-      maxRegenCurrent = (float)((uint16_t)((message.data[3]<<8)|(message.data[2]<<0)))/100;
-      BMSchargeCurrSetpoint = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))/100;
-      maxDischargeCurrent = (float)((uint16_t)((message.data[7]<<8)|(message.data[6]<<0)))/100;
-  }
   else if (message.id == INVNTS_TPDO3_ID){
       ResetInvntsTimer(CT_INVNTS_VIRT_BATT_LOST_DELAY);
       nowMillis = millis();
@@ -112,7 +119,7 @@ void recInvntsVirtualBattStatus(CANMessage message){
   else if (message.id == INVNTS_TPDO4_ID){
       ResetInvntsTimer(CT_INVNTS_VIRT_BATT_LOST_DELAY);
       nowMillis = millis();
-      battVoltage = (float)((uint16_t)((message.data[1]<<8)|(message.data[0]<<0)))*0.001; //voltage
+      
       moduleMinMvolts = (float)((uint16_t)((message.data[3]<<8)|(message.data[2]<<0)))*0.001; //cell min voltage
       moduleMaxMvolts = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))*0.001; //cell max voltage
   }
