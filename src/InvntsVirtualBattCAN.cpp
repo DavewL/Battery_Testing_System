@@ -8,7 +8,7 @@ extern Carloop<CarloopRevision2> carloop;
 
 static const unsigned int scawInvntsVirtualBattTimers[NUM_INVNTS_VIRT_BATT_TIMERS] =
 {
-  /* CT_INVNTS_VIRT_BATT_LOST_DELAY   */   2000,  //ms -delay before INVNTS CAN is assumed lost
+  /* CT_INVNTS_VIRT_BATT_LOST_DELAY   */   6000,  //ms -delay before INVNTS CAN is assumed lost
 };
 
 static TICK_TIMER_S scastInvntsVirtualBattTimers[NUM_INVNTS_VIRT_BATT_TIMERS];
@@ -42,6 +42,7 @@ void recInvntsVirtualBattStatus(CANMessage message){
 
     battVoltage = (float)((uint16_t)((message.data[1]<<8)|(message.data[0]<<0)))*0.001; //voltage
     battCurrent = (float)((int16_t)((message.data[3]<<8)|(message.data[2]<<0)))/10;  //current
+
     if (battVoltage > 0){
         deltaMillis = nowMillis - prevMillis;
         prevMillis = nowMillis;
@@ -51,9 +52,7 @@ void recInvntsVirtualBattStatus(CANMessage message){
         //cumlAmpHrs = cumlAmpHrs + ampHours;
         wattHours = wattHours + (tempWattSeconds/3600);
       }
-    maxDischargeCurrent = (float)((uint16_t)((message.data[7]<<8)|(message.data[6]<<0)))/10; 
-    maxRegenCurrent = (float)((uint16_t)((message.data[3]<<8)|(message.data[2]<<0)))/100;
-    BMSchargeCurrSetpoint = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))/100;
+    maxDischargeCurrent = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))/10;     
   }
 
   else if (message.id == INVNTS_TPDO4_ID){
@@ -113,12 +112,18 @@ void recInvntsVirtualBattStatus(CANMessage message){
       ResetInvntsTimer(CT_INVNTS_VIRT_BATT_LOST_DELAY);
       nowMillis = millis();
 
-      moduleMinTemperature = ((float)((int16_t)((message.data[3]<<8)|(message.data[2]<<0)))/10);// -273.15;
-      moduleMaxTemperature = ((float)((int16_t)((message.data[5]<<8)|(message.data[4]<<0)))/10);// -273.15;
+      //moduleMinTemperature = ((float)((int16_t)((message.data[3]<<8)|(message.data[2]<<0)))/10);// -273.15;
+      moduleMaxTemperature = ((float)((int16_t)((message.data[1]<<8)|(message.data[0]<<0)))/10);// -273.15;
+      moduleMinTemperature = moduleMaxTemperature;
+
+      BMSchargeCurrSetpoint = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))/10;
+      BMSchargeVoltSetpoint = (float)((uint16_t)((message.data[7]<<8)|(message.data[6]<<0)))*0.001; //max charge voltage
   }
-  else if (message.id == INVNTS_TPDO4_ID){
+  else if (message.id == INVNTS_TPDO5_ID){
       ResetInvntsTimer(CT_INVNTS_VIRT_BATT_LOST_DELAY);
       nowMillis = millis();
+
+      maxRegenCurrent = (float)((uint16_t)((message.data[1]<<8)|(message.data[0]<<0)))/10;
       
       moduleMinMvolts = (float)((uint16_t)((message.data[3]<<8)|(message.data[2]<<0)))*0.001; //cell min voltage
       moduleMaxMvolts = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))*0.001; //cell max voltage

@@ -5,7 +5,7 @@
 extern float moduleSOCscale;
 extern float battVoltage;
 extern float battCurrent;
-extern float maxDischargeCurrent;
+extern double maxDischargeCurrent;
 extern float maxRegenCurrent;
 extern int chargeStatus;
 extern int BMSstatus;
@@ -97,8 +97,8 @@ extern int what2logTxt;
 
 extern int onceThrough;   //init tasks in periodic scheduler
 
-extern float BMSchargeCurrSetpoint;
-extern float BMSchargeVoltSetpoint;
+extern double BMSchargeCurrSetpoint;
+extern double BMSchargeVoltSetpoint;
 
 extern unsigned int BMSstatusWord;
 
@@ -119,3 +119,5 @@ extern int InvntsHeaterStat;
 
 extern int maxChargePercent;
 extern int minDischargePercent;
+
+extern int tempOk2ChargeStatus;

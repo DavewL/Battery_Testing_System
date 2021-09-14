@@ -31,7 +31,7 @@ const int rechargeCutoff = 101;     //% - set to greater than 100 to force charg
 float moduleSOCscale = 0.0;
 float battVoltage;
 float battCurrent = 2.2;
-float maxDischargeCurrent;
+double maxDischargeCurrent;
 float maxRegenCurrent;
 int chargeStatus =3;
 int BMSstatus;
@@ -120,8 +120,8 @@ int what2logTxt;
 //task timer variable
 int onceThrough = 0;   //init tasks in periodic scheduler
 
-float BMSchargeCurrSetpoint = 0;
-float BMSchargeVoltSetpoint = 0;
+double BMSchargeCurrSetpoint = 0;
+double BMSchargeVoltSetpoint = 0;
 
 unsigned int BMSstatusWord = 0;
 
@@ -141,6 +141,8 @@ int internalCommStatus = 4;
 
 int maxChargePercent = 100;
 int minDischargePercent = 0;
+
+int tempOk2ChargeStatus = 0;
 
 extern String testState2String;
 

@@ -110,6 +110,9 @@ void initCycleTest(void){
   //Particle.variable("CellDeltaV", cellsDeltaV2String);
   Particle.variable("CellMinVolts", cellMinVoltsString);
   Particle.variable("CellMaxVolts", cellMaxVoltsString);
+  Particle.variable("chargeVsetpoint", BMSchargeVoltSetpoint);
+  Particle.variable("chargeAsetpoint", BMSchargeCurrSetpoint);
+  Particle.variable("maxDischargeCurr", maxDischargeCurrent);
 
   
   pinMode(CHARGE_EN, OUTPUT);
@@ -169,7 +172,7 @@ void CycleTest(void){
     heaterStatus2String = "ERROR";
   }
 
-  int tempOk2ChargeStatus = okToCharge();
+  tempOk2ChargeStatus = okToCharge();
   ok2ChargeStatus = String::format("%d",tempOk2ChargeStatus);
 
   int tempOk2DischargeStatus = okToDischarge();
@@ -302,7 +305,7 @@ void CycleTest(void){
           break;
         }
       }
-      Serial.println(okToCharge());
+      //Serial.println(okToCharge());
       if (battType == VALENCE_REV3){
         if (BMSrev3CANok()){
           if (moduleSOCscale < maxChargePercent){
@@ -913,14 +916,38 @@ void CycleTest(void){
       break;
 
     case  stateCOMMANDHALT:           //13
-      testState = stateHALT;
+      flagSDPause = 1;
+      turnElLoadOFF();
+      setElLoadToFixed();
+      if (battType == INVNTS_VIRT_BATT){
+        digitalWrite(INVNTS_DISCHRG, HIGH);
+        digitalWrite(CHARGE_EN, LOW);
+      }
+      rechargeState = 0;
+      //testState = stateHALT;
       break;
 
     case  stateERRORHALT:             //14
-      testState = stateHALT;
+      flagSDPause = 1;
+      turnElLoadOFF();
+      setElLoadToFixed();
+      if (battType == INVNTS_VIRT_BATT){
+        digitalWrite(INVNTS_DISCHRG, HIGH);
+        digitalWrite(CHARGE_EN, LOW);
+      }
+      rechargeState = 0;
+      //testState = stateHALT;
       break;
 
     case  stateHALT:                  //15
+      flagSDPause = 1;
+      turnElLoadOFF();
+      setElLoadToFixed();
+      if (battType == INVNTS_VIRT_BATT){
+        digitalWrite(INVNTS_DISCHRG, HIGH);
+        digitalWrite(CHARGE_EN, LOW);
+      }
+      rechargeState = 0;
       break;
 
     case  statePAUSE:                 //16
@@ -1156,6 +1183,7 @@ void rechargeOn(void)
   else if (battType == INVNTS_VIRT_BATT){
     digitalWrite(CHARGE_EN, HIGH);
     digitalWrite(INVNTS_DISCHRG, LOW);
+    keySignalStatus = 0;
     rechargeState = 1;
   }
   else if (moduleMinTemperature > CHARGE_MIN_TEMP){
@@ -1181,6 +1209,7 @@ void rechargeOff(void)
   }
   if (battType == INVNTS_VIRT_BATT){
     digitalWrite(INVNTS_DISCHRG, HIGH);
+    keySignalStatus = 1;
   }
   digitalWrite(CHARGE_EN, LOW);  //low
   rechargeState = 0;
@@ -1386,22 +1415,22 @@ int okToCharge(void){
   else{
     if (battType == INVNTS_OLD){
       if (BMSchargeCurrSetpoint > 0){
-        BMSchargeVoltSetpoint = 30.4;
+        BMSchargeVoltSetpoint = 30.3;
       }
     }
     else if (battType == INVNTS_60AH){
       if (BMSchargeCurrSetpoint > 0){
-        BMSchargeVoltSetpoint = 30.4;
+        BMSchargeVoltSetpoint = 30.3;
       }
     }
     else if (battType == INVNTS_80AH){
       if ((BMSchargeCurrSetpoint > 0) || (InvntsHeaterStat==1)){  //BMSchargeCurrSetpoint > 0
-        BMSchargeVoltSetpoint = 30.4;
+        BMSchargeVoltSetpoint = 30.3;
       }
     }
     else if (battType == INVNTS_VIRT_BATT){
       if ((BMSchargeCurrSetpoint > 0) || (InvntsHeaterStat==1)){  //BMSchargeCurrSetpoint > 0
-        BMSchargeVoltSetpoint = 30.4;
+        //BMSchargeVoltSetpoint = 30.4;
       }
     }
     return 1;
