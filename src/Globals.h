@@ -121,3 +121,10 @@ extern int maxChargePercent;
 extern int minDischargePercent;
 
 extern int tempOk2ChargeStatus;
+
+extern int Invnts_ATSAMfirmwareLetterRev;
+extern int Invnts_ATSAMfirmwareMajorRev;
+extern int Invnts_ATSAMfirmwareMinorRev;
+extern int Invnts_BQ80firmwareLetterRev;
+extern int Invnts_BQ80firmwareMajorRev;
+extern int Invnts_BQ80firmwareMinorRev;

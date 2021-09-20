@@ -144,6 +144,13 @@ int minDischargePercent = 0;
 
 int tempOk2ChargeStatus = 0;
 
+int Invnts_ATSAMfirmwareLetterRev = 0;
+int Invnts_ATSAMfirmwareMajorRev = 0;
+int Invnts_ATSAMfirmwareMinorRev = 0;
+int Invnts_BQ80firmwareLetterRev = 0;
+int Invnts_BQ80firmwareMajorRev = 0;
+int Invnts_BQ80firmwareMinorRev = 0;
+
 extern String testState2String;
 
 #define OS_10MS_MASK    0x0001

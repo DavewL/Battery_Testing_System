@@ -99,13 +99,13 @@ void Tasks40ms(){
       //put 15 Second tasks here
       dispBatterySOC();
       if (intervalCounter == 1){
-        Particle.publish("current", battCurr2String, PRIVATE);
+        //Particle.publish("current", battCurr2String, PRIVATE);
       }
       else if (intervalCounter == 2){
-        Particle.publish("voltage", battVolt2String, PRIVATE);
+        //Particle.publish("voltage", battVolt2String, PRIVATE);
       }
       else if (intervalCounter == 3){
-        Particle.publish("temperature", battMaxTemp2String, PRIVATE);
+        //Particle.publish("temperature", battMaxTemp2String, PRIVATE);
       }
       else if (intervalCounter == 4){
         Particle.publish("SOC", battSOC2String, PRIVATE);
@@ -158,12 +158,8 @@ void Tasks160ms(){
     }
     else if (battType == INVNTS_VIRT_BATT){
       transmitRPDO1();
-      //InvntsVirtualBattSDOReadReq(INVNTS_VOLTS_SUBINDEX);
-      //InvntsVirtualBattSDOReadReq(INVNTS_CURRENT_SUBINDEX);
-      //InvntsVirtualBattSDOReadReq(INVNTS_CHRG_STATUS_SUBINDEX);
-      InvntsVirtualBattSDOReadReq(INVNTS_HEATER_STATUS_SUBINDEX);
-      //InvntsVirtualBattSDOReadReq(INVNTS_MIN_CELL_TEMP);
-      //InvntsVirtualBattSDOReadReq(INVNTS_MAX_CELL_TEMP);
+      InvntsVirtualBattSDOReadReq(INVNTS_MIN_CELL_TEMP_INDEX,INVNTS_MIN_CELL_TEMP_SUBINDEX);
+      InvntsVirtualBattSDOReadReq(INVNTS_MAX_CELL_TEMP_INDEX,INVNTS_MAX_CELL_TEMP_SUBINDEX);
     }
   }
 }
@@ -178,8 +174,14 @@ void Tasks640ms(){
 
 void Tasks1280ms(){
   static int intervalCounter = 1;
+
   if (onceThrough == 1){
     dispBatteryAmps();
+
+    if (battType == INVNTS_VIRT_BATT){
+      InvntsVirtualBattSDOReadReq(INVNTS_INTERNAL_STAT_INDEX,INVNTS_BQ80_VER_SUBINDEX);
+      InvntsVirtualBattSDOReadReq(INVNTS_INTERNAL_STAT_INDEX,INVNTS_ATSAM_VER_SUBINDEX);
+    }
 
     if (intervalCounter == 1){
       dispBatteryStats();

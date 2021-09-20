@@ -33,14 +33,14 @@ void recInvntsVirtualBattStatus(CANMessage message){
   if (message.id == INVNTS_TPDO1_ID){
     ResetInvntsTimer(CT_INVNTS_VIRT_BATT_LOST_DELAY);
     nowMillis = millis();
-    moduleSOCscale = (float)message.data[1];  //SOC %
+    //moduleSOCscale = (float)message.data[1];  //SOC %
   }
 
   else if (message.id == INVNTS_TPDO2_ID){
     ResetInvntsTimer(CT_INVNTS_VIRT_BATT_LOST_DELAY);
     nowMillis = millis();
 
-    battVoltage = (float)((uint16_t)((message.data[1]<<8)|(message.data[0]<<0)))*0.001; //voltage
+    //battVoltage = (float)((uint16_t)((message.data[1]<<8)|(message.data[0]<<0)))*0.001; //voltage
     battCurrent = (float)((int16_t)((message.data[3]<<8)|(message.data[2]<<0)))/10;  //current
 
     if (battVoltage > 0){
@@ -103,18 +103,11 @@ void recInvntsVirtualBattStatus(CANMessage message){
     if (internalCommStatus){
       internalCommStatus = ((message.data[7]&0x032) >> 5)*3;        //0010 0000
     }
-
-      //moduleMaxTemperature = ((float)((int16_t)((message.data[7]<<8)|(message.data[6]<<0)))/10)-273.15;
-      //moduleMinTemperature = moduleMaxTemperature;
   }
 
   else if (message.id == INVNTS_TPDO3_ID){
       ResetInvntsTimer(CT_INVNTS_VIRT_BATT_LOST_DELAY);
       nowMillis = millis();
-
-      //moduleMinTemperature = ((float)((int16_t)((message.data[3]<<8)|(message.data[2]<<0)))/10);// -273.15;
-      moduleMaxTemperature = ((float)((int16_t)((message.data[1]<<8)|(message.data[0]<<0)))/10);// -273.15;
-      moduleMinTemperature = moduleMaxTemperature;
 
       BMSchargeCurrSetpoint = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))/10;
       BMSchargeVoltSetpoint = (float)((uint16_t)((message.data[7]<<8)|(message.data[6]<<0)))*0.001; //max charge voltage
@@ -128,42 +121,42 @@ void recInvntsVirtualBattStatus(CANMessage message){
       moduleMinMvolts = (float)((uint16_t)((message.data[3]<<8)|(message.data[2]<<0)))*0.001; //cell min voltage
       moduleMaxMvolts = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))*0.001; //cell max voltage
   }
+  else if (message.id == INVNTS_TPDO6_ID){
+      ResetInvntsTimer(CT_INVNTS_VIRT_BATT_LOST_DELAY);
+      nowMillis = millis();
+
+      battVoltage = (float)((uint16_t)((message.data[1]<<8)|(message.data[0]<<0)))*0.001; //voltage
+
+      moduleSOCscale = (float)message.data[2];  //SOC %
+      
+      //moduleMaxTemperature = ((float)((int16_t)((message.data[4]<<8)|(message.data[3]<<0)))*.125);// -273.15;
+      //moduleMinTemperature = moduleMaxTemperature;
+  }
 
   else if (message.id == INVNTS_SDO_RESP_ID){
     ResetInvntsTimer(CT_INVNTS_VIRT_BATT_LOST_DELAY);
     nowMillis = millis();
-    if ((message.data[0] == 0x4B)&&(message.data[1]==0x01)&&(message.data[2]==0xC1)){
-      if (message.data[3] == INVNTS_VOLTS_SUBINDEX){
-        battVoltage = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))/1000; //voltage
+    
+    if ((message.data[2]<<8)|(message.data[1]) == INVNTS_MAX_CELL_TEMP_INDEX){
+      if (message.data[3] == INVNTS_MAX_CELL_TEMP_SUBINDEX){
+        moduleMaxTemperature = ((float)((int16_t)((message.data[5]<<8)|(message.data[4]<<0)))*.125);
       }
-      else if (message.data[3]== INVNTS_CURRENT_SUBINDEX){
-        battCurrent = (float)((int16_t)((message.data[5]<<8)|(message.data[4]<<0)))/100;  //current
-        if (battVoltage > 0){
-          deltaMillis = nowMillis - prevMillis;
-          prevMillis = nowMillis;
-          tempAmpSeconds = battCurrent * ((float)deltaMillis/1000);
-          ampHours = ampHours + (tempAmpSeconds/3600);
-          tempWattSeconds = battVoltage * tempAmpSeconds;
-          //cumlAmpHrs = cumlAmpHrs + ampHours;
-          wattHours = wattHours + (tempWattSeconds/3600);
-        } 
+    }
+    else if ((message.data[2]<<8)|(message.data[1]) == INVNTS_INTERNAL_STAT_INDEX){    //(message.data[0] == 0x4B)&&(message.data[1]==0x01)&&(message.data[2]==0xC1)){
+      if (message.data[3] == INVNTS_ATSAM_VER_SUBINDEX){
+        Invnts_ATSAMfirmwareLetterRev = (uint8_t)(message.data[5]);
+        Invnts_ATSAMfirmwareMajorRev = (uint8_t)(message.data[7]);
+        Invnts_ATSAMfirmwareMinorRev = (uint8_t)(message.data[6]);
       }
-      else if (message.data[3]==INVNTS_HEATER_STATUS_SUBINDEX){
-        InvntsHeaterStat = (uint8_t)message.data[4];
+      else if (message.data[3] == INVNTS_BQ80_VER_SUBINDEX){
+        Invnts_BQ80firmwareLetterRev = (uint8_t)(message.data[5]);
+        Invnts_BQ80firmwareMajorRev = (uint8_t)(message.data[7]);
+        Invnts_BQ80firmwareMinorRev = (uint8_t)(message.data[6]);
       }
-      else if (message.data[3] == INVNTS_CHRG_STATUS_SUBINDEX){
-        if (message.data[4] == 32){
-          chargeStatus = COMPLETE;
-        }
-        else{
-          chargeStatus = MAIN;
-        }
-      }
-      else if (message.data[3] == INVNTS_MIN_CELL_TEMP){
-        moduleMinTemperature = ((float)((int16_t)((message.data[5]<<8)|(message.data[4]<<0)))/10)-273.15;
-      }
-      else if (message.data[3] == INVNTS_MAX_CELL_TEMP){
-        moduleMaxTemperature = ((float)((int16_t)((message.data[5]<<8)|(message.data[4]<<0)))/10)-273.15;
+    }
+    else if ((message.data[2]<<8)|(message.data[1]) == INVNTS_MIN_CELL_TEMP_INDEX){
+      if (message.data[3] == INVNTS_MIN_CELL_TEMP_SUBINDEX){
+        moduleMinTemperature = ((float)((int16_t)((message.data[5]<<8)|(message.data[4]<<0)))*.125);
       }
     }
   }
@@ -186,15 +179,18 @@ void ResetInvntsTimer(INVNTS_VIRT_BATT_TIMERS eCANTimer)
   }
 }
 
-void InvntsVirtualBattSDOReadReq(int sub_index){
+void InvntsVirtualBattSDOReadReq(int index, int sub_index){
   CANMessage message;
   message.id = 0x631;
-  message.len = 4;
+  message.len = 8;
   message.data[0] = 0x40;
-  message.data[1] = 0x01;  //pack number
-  message.data[2] = 0xC1;
-  message.data[3] = sub_index;
-
+  message.data[1] = (byte)(index >> 0) & 0xFF;
+  message.data[2] = (byte)(index >> 8) & 0xFF;
+  message.data[3] = (byte)sub_index;
+  message.data[4] = 0x00;
+  message.data[5] = 0x00;
+  message.data[6] = 0x00;
+  message.data[7] = 0x00;
   carloop.can().transmit(message);
 }
 

@@ -97,6 +97,7 @@ void initCycleTest(void){
   Particle.function("SetChrgCurr",fSetChrgCurr);
   Particle.function("SetChrgVolt",fSetChrgVolt);
   Particle.function("ElLoadString",fElLoadString);
+  
   Particle.variable("OkToCharge", ok2ChargeStatus);
   Particle.variable("okToDischarge", ok2DischargeStatus);
   Particle.variable("HeaterState", heaterState2String);
@@ -158,6 +159,17 @@ void CycleTest(void){
   battCurr2String = String::format("%.1f", battCurrent);
 
   float DQcurrentSetpoint = 0;
+
+  char Invnts_ATSAMfirmwareLetterRev_char = 0; 
+  char Invnts_ATSAMfirmwareMajorRev_char = 0;
+  char Invnts_ATSAMfirmwareMinorRev_char = 0;
+  String Invnts_ATSAMfirmwareRev = "#ATSAM Version,";
+
+  char Invnts_BQ80firmwareLetterRev_char = 0;
+  char Invnts_BQ80firmwareMajorRev_char = 0;
+  char Invnts_BQ80firmwareMinorRev_char = 0;
+  String Invnts_BQ80firmwareRev = "#BQ80 Version,";
+
   maxSurfTempReturned = maxCSMSurfaceTemp();
 
   manageSDLogging();
@@ -205,7 +217,10 @@ void CycleTest(void){
 
       DQfixedCurrOverride = 0;
       DQfixedVoltOverride = 0;
+      
       testState = statePOWER_ON;
+      
+
       if(battType == VALENCE_REV3){
         heaterState = heaterOFF;
         turnHeaterOff();
@@ -238,11 +253,10 @@ void CycleTest(void){
       else if (battType == INVNTS_VIRT_BATT){
         heaterState = heaterDisabled;
         digitalWrite(INVNTS_DISCHRG, HIGH);
-        digitalWrite(CHARGE_EN, HIGH);
+        digitalWrite(CHARGE_EN, LOW);
         rechargeOff();
       }
 
-      initSerialElLoad();
       if (readFrameFileExists == 1){
         LogUserString("#CYCLES,#PH_CYCLES,#RECHARGE_CYCLES");
       }
@@ -250,6 +264,7 @@ void CycleTest(void){
 
     case statePOWER_ON:          //1
       //transmitDQGoOp();
+      initSerialElLoad();
       putElLoadIntoRemote();
       testState = statePWRRESET_LOAD_OFF;
       break;
@@ -277,6 +292,7 @@ void CycleTest(void){
       }
 
       testState = statePOWERRESETCHRGON;
+      
       break;
 
     case statePOWERRESETCHRGON:   //3
@@ -295,7 +311,7 @@ void CycleTest(void){
         setIC1200Current = 0;
         setIC1200Voltage = 0;
       }
-       else if (battType != INVNTS_VIRT_BATT){
+      else if (battType != INVNTS_VIRT_BATT){
         IC1200Enable = 0;
         setIC1200Current = 0;
         setIC1200Voltage = 0;
@@ -305,6 +321,7 @@ void CycleTest(void){
           break;
         }
       }
+
       //Serial.println(okToCharge());
       if (battType == VALENCE_REV3){
         if (BMSrev3CANok()){
@@ -432,6 +449,35 @@ void CycleTest(void){
       }
       else if (battType == INVNTS_VIRT_BATT){
         if (InvntsVirtualBattCANok()){
+
+          if ((Invnts_ATSAMfirmwareLetterRev != 0)&&(Invnts_BQ80firmwareLetterRev != 0)){
+            Invnts_ATSAMfirmwareLetterRev_char = Invnts_ATSAMfirmwareLetterRev; 
+            Invnts_ATSAMfirmwareMajorRev_char = Invnts_ATSAMfirmwareMajorRev;
+            Invnts_ATSAMfirmwareMinorRev_char = Invnts_ATSAMfirmwareMinorRev;
+            Invnts_ATSAMfirmwareRev.concat(Invnts_ATSAMfirmwareLetterRev_char);
+            Invnts_ATSAMfirmwareRev.concat(Invnts_ATSAMfirmwareMajorRev_char);
+            Invnts_ATSAMfirmwareRev.concat(".");
+            Invnts_ATSAMfirmwareRev.concat(Invnts_ATSAMfirmwareMinorRev_char);
+            
+            Invnts_BQ80firmwareLetterRev_char = Invnts_BQ80firmwareLetterRev;
+            Invnts_BQ80firmwareMajorRev_char = Invnts_BQ80firmwareMajorRev;
+            Invnts_BQ80firmwareMinorRev_char = Invnts_BQ80firmwareMinorRev;
+            Invnts_BQ80firmwareRev.concat(Invnts_BQ80firmwareLetterRev_char);
+            Invnts_BQ80firmwareRev.concat(Invnts_BQ80firmwareMajorRev_char);
+            Invnts_BQ80firmwareRev.concat(".");
+            Invnts_BQ80firmwareRev.concat(Invnts_BQ80firmwareMinorRev_char);
+
+            LogUserString(Invnts_ATSAMfirmwareRev);
+            LogUserString(Invnts_BQ80firmwareRev);
+
+            Particle.publish("ATSAM", Invnts_ATSAMfirmwareRev, PRIVATE);
+            Particle.publish("BQ80", Invnts_BQ80firmwareRev, PRIVATE);
+
+          }
+          else{
+            break;
+          }
+
           if (moduleSOCscale < maxChargePercent){
             if (okToCharge() == 1){     //ok to charge
               rechargeOn();
@@ -453,8 +499,8 @@ void CycleTest(void){
           }
         }
         else {
-          rechargeOff();
-          testState = stateERRORHALT;
+          //rechargeOff();
+          //testState = stateERRORHALT;
         }
       }
       else{
@@ -920,7 +966,7 @@ void CycleTest(void){
       turnElLoadOFF();
       setElLoadToFixed();
       if (battType == INVNTS_VIRT_BATT){
-        digitalWrite(INVNTS_DISCHRG, HIGH);
+        digitalWrite(INVNTS_DISCHRG, LOW);
         digitalWrite(CHARGE_EN, LOW);
       }
       rechargeState = 0;
@@ -932,7 +978,7 @@ void CycleTest(void){
       turnElLoadOFF();
       setElLoadToFixed();
       if (battType == INVNTS_VIRT_BATT){
-        digitalWrite(INVNTS_DISCHRG, HIGH);
+        digitalWrite(INVNTS_DISCHRG, LOW);
         digitalWrite(CHARGE_EN, LOW);
       }
       rechargeState = 0;
@@ -944,7 +990,7 @@ void CycleTest(void){
       turnElLoadOFF();
       setElLoadToFixed();
       if (battType == INVNTS_VIRT_BATT){
-        digitalWrite(INVNTS_DISCHRG, HIGH);
+        digitalWrite(INVNTS_DISCHRG, LOW);
         digitalWrite(CHARGE_EN, LOW);
       }
       rechargeState = 0;
@@ -976,8 +1022,8 @@ void CycleTest(void){
 //change delta-q settings to additive current based on known loads and expected voltage
   //----------------------------   MANAGE DELTA-Q SETTINGS    -------------------------------------------------------//
   DQcurrentSetpoint = 0.0;
-  if ((battType == INVNTS_VIRT_BATT)&&(InvntsHeaterStat==1)){
-    DQcurrentSetpoint += 8;
+  if ((battType == INVNTS_VIRT_BATT)&&(InvntsHeaterStat==1)){   //need to put the correct DQ handshaking here
+    //DQcurrentSetpoint += 8;
   }
   else {
     if (heaterStatus == 1){
@@ -1004,7 +1050,7 @@ void CycleTest(void){
       }
     }
   }
-  if (1){  //set dq current setpoint based on BMS current request
+  if (testState != stateDISCHARGE){  //set dq current setpoint based on BMS current request, don't override the SD card playback value for regen
     DQcurrentSetpoint = DQcurrentSetpoint + BMSchargeCurrSetpoint;
   }
   if ((moduleMaxTemperature > MODULE_HIGH_TEMP_CHRG_CUTBACK_ON)&&(DQcurrentSetpoint > 15)){
@@ -1046,11 +1092,11 @@ void CycleTest(void){
       //}
     }
     else if (battType == INVNTS_VIRT_BATT){
-      if((moduleMaxMvolts>3550)&&(DQcurrentSetpoint > 7)){
-        DQcurrentSetpoint = 7;
+      if((moduleMaxMvolts>3520)&&(DQcurrentSetpoint > 7)){
+        DQcurrentSetpoint = 4;
       }
-      if((moduleMaxMvolts>3520)&&(DQcurrentSetpoint > 15)){
-        DQcurrentSetpoint = 15;
+      if((moduleMaxMvolts>3500)&&(DQcurrentSetpoint > 15)){
+        DQcurrentSetpoint = 12;
       }
       //if (moduleMaxMvolts<3490){                    //commented out to allow heater offset to function correctly
         //DQcurrentSetpoint = BMSchargeCurrSetpoint;
@@ -1182,13 +1228,13 @@ void rechargeOn(void)
   }
   else if (battType == INVNTS_VIRT_BATT){
     digitalWrite(CHARGE_EN, HIGH);
-    digitalWrite(INVNTS_DISCHRG, LOW);
-    keySignalStatus = 0;
+    digitalWrite(INVNTS_DISCHRG, HIGH);
+    keySignalStatus = 1;
     rechargeState = 1;
   }
   else if (moduleMinTemperature > CHARGE_MIN_TEMP){
     digitalWrite(CHARGE_EN, HIGH);
-    digitalWrite(INVNTS_DISCHRG, LOW);
+    digitalWrite(INVNTS_DISCHRG, HIGH);
     rechargeState = 1;
   }
   else{
@@ -1232,12 +1278,18 @@ int fSetChrgCurr(String setCurrString){
   fixedOverRideCurr = setCurrString.toFloat();
   //fixedOverRideCurr = setDQCurrent;
   DQfixedCurrOverride = 1;
+  if (fixedOverRideCurr < 0) {
+    DQfixedCurrOverride = 0;
+  }
   return 1;
 }
 
 int fSetChrgVolt(String setVoltString){
   fixedOverRideVolt = setVoltString.toFloat();
   DQfixedVoltOverride = 1;
+  if (fixedOverRideVolt < 0){
+    DQfixedVoltOverride = 0;
+  }
   return 1;
 }
 

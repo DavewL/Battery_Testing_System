@@ -14,23 +14,24 @@
 #define INVNTS_MUX_2 0x02
 #define INVNTS_MUX_3 0x03
 
-#define CELL_1_MUX 0x32
-#define CELL_2_MUX 0x33
-#define CELL_3_MUX 0x34
-#define CELL_4_MUX 0x35
-#define CELL_5_MUX 0x36
-#define CELL_6_MUX 0x37
-#define CELL_7_MUX 0x38
-#define CELL_8_MUX 0x39
-
 #define INVNTS_VOLTS_SUBINDEX 0x09
 #define INVNTS_CURRENT_SUBINDEX 0x0A
 #define INVNTS_AVG_CURRENT_SUBINDEX 0x0B
 #define INVNTS_CHRG_STATUS_SUBINDEX 0x16
 #define INVNTS_SN_SUBINDEX 0x1C
-#define INVNTS_HEATER_STATUS_SUBINDEX 0x92
-#define INVNTS_MIN_CELL_TEMP 0xD8
-#define INVNTS_MAX_CELL_TEMP 0xD9
+
+#define INVNTS_HEATER_STAT_INDEX 0x4810
+#define INVNTS_HEATER_STATUS_SUBINDEX 0x00
+
+#define INVNTS_MIN_CELL_TEMP_INDEX 0x4808
+#define INVNTS_MIN_CELL_TEMP_SUBINDEX 0x00
+
+#define INVNTS_MAX_CELL_TEMP_INDEX 0x4809
+#define INVNTS_MAX_CELL_TEMP_SUBINDEX 0x00
+
+#define INVNTS_INTERNAL_STAT_INDEX 0xD000
+#define INVNTS_ATSAM_VER_SUBINDEX 0x20
+#define INVNTS_BQ80_VER_SUBINDEX 0x23
 
 
 typedef enum
@@ -43,5 +44,5 @@ typedef enum
 void initInvntsVirtualBattCAN(void);
 void recInvntsVirtualBattStatus(CANMessage message);
 int InvntsVirtualBattCANok(void);
-void InvntsVirtualBattSDOReadReq(int);
+void InvntsVirtualBattSDOReadReq(int, int);
 void InvntsVirtualBattSDOWriteReq(int, int);
