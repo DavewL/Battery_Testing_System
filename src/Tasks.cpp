@@ -117,9 +117,23 @@ void Tasks40ms(){
 }
 
 void Tasks80ms(){
+  static int intervalCounter = 0;
+
   if (onceThrough == 1){
     CycleTest();
     sendStatusCAN();
+    if (intervalCounter == 0){
+      if (battType == INVNTS_VIRT_BATT){
+        InvntsVirtualBattSDOReadReq(INVNTS_MAX_CELL_TEMP_INDEX,INVNTS_MAX_CELL_TEMP_SUBINDEX);
+      }
+      intervalCounter++;
+    }
+    else if (intervalCounter == 1){
+      if (battType == INVNTS_VIRT_BATT){
+        InvntsVirtualBattSDOReadReq(INVNTS_MIN_CELL_TEMP_INDEX,INVNTS_MIN_CELL_TEMP_SUBINDEX);
+      }
+      intervalCounter = 0;
+    }
   }
 }
 
@@ -158,8 +172,6 @@ void Tasks160ms(){
     }
     else if (battType == INVNTS_VIRT_BATT){
       transmitRPDO1();
-      InvntsVirtualBattSDOReadReq(INVNTS_MIN_CELL_TEMP_INDEX,INVNTS_MIN_CELL_TEMP_SUBINDEX);
-      InvntsVirtualBattSDOReadReq(INVNTS_MAX_CELL_TEMP_INDEX,INVNTS_MAX_CELL_TEMP_SUBINDEX);
     }
   }
 }
