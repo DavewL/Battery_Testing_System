@@ -142,7 +142,7 @@ void recInvntsVirtualBattStatus(CANMessage message){
         moduleMaxTemperature = ((float)((int16_t)((message.data[5]<<8)|(message.data[4]<<0)))*.125);
       }
     }
-    else if ((message.data[2]<<8)|(message.data[1]) == INVNTS_INTERNAL_STAT_INDEX){    //(message.data[0] == 0x4B)&&(message.data[1]==0x01)&&(message.data[2]==0xC1)){
+    if ((message.data[2]<<8)|(message.data[1]) == INVNTS_INTERNAL_STAT_INDEX){    //(message.data[0] == 0x4B)&&(message.data[1]==0x01)&&(message.data[2]==0xC1)){
       if (message.data[3] == INVNTS_ATSAM_VER_SUBINDEX){
         Invnts_ATSAMfirmwareLetterRev = (uint8_t)(message.data[5]);
         Invnts_ATSAMfirmwareMajorRev = (uint8_t)(message.data[7]);
@@ -154,7 +154,7 @@ void recInvntsVirtualBattStatus(CANMessage message){
         Invnts_BQ80firmwareMinorRev = (uint8_t)(message.data[6]);
       }
     }
-    else if ((message.data[2]<<8)|(message.data[1]) == INVNTS_MIN_CELL_TEMP_INDEX){
+    if ((message.data[2]<<8)|(message.data[1]) == INVNTS_MIN_CELL_TEMP_INDEX){
       if (message.data[3] == INVNTS_MIN_CELL_TEMP_SUBINDEX){
         moduleMinTemperature = ((float)((int16_t)((message.data[5]<<8)|(message.data[4]<<0)))*.125);
       }

@@ -69,6 +69,9 @@ int fStateHeater(String heaterCommand);
 int fSetChrgCurr(String setCurrString);
 int fSetChrgVolt(String setVoltString);
 int fElLoadFunc(String command);
+int fSetMinDischargePercent(String minDischargePrcnt);
+int fSetMaxChargePercent(String maxChargePrcnt);
+
 int okToDischarge(void);
 int okToCharge(void);
 void turnHeaterOn(void);
@@ -97,6 +100,8 @@ void initCycleTest(void){
   Particle.function("SetChrgCurr",fSetChrgCurr);
   Particle.function("SetChrgVolt",fSetChrgVolt);
   Particle.function("ElLoadString",fElLoadString);
+  Particle.function("SetMinDischargePercent",fSetMinDischargePercent);
+  Particle.function("SetMaxChargePercent",fSetMaxChargePercent);
   
   Particle.variable("OkToCharge", ok2ChargeStatus);
   Particle.variable("okToDischarge", ok2DischargeStatus);
@@ -1057,6 +1062,10 @@ void CycleTest(void){
     DQcurrentSetpoint = 15;
   }
 
+  if (DQcurrentSetpoint >= 34){
+    DQcurrentSetpoint = 34;
+  }
+
   if (testState != stateDISCHARGE){  //don't override the SD card playback value for regen
     if (battType == INVNTS_OLD){
       if((moduleMaxMvolts>3550)&&(DQcurrentSetpoint > 7)){
@@ -1348,6 +1357,16 @@ int fStateTest(String command)
     else return -1;
 }
 
+int fSetMinDischargePercent(String minDischargePrcnt){
+  minDischargePercent = minDischargePrcnt.toInt();
+  return 1;
+}
+
+int fSetMaxChargePercent(String maxChargePrcnt){
+  maxChargePercent = maxChargePrcnt.toInt();
+  return 1;
+}
+
 int okToDischarge(void){
   static int contactorStatFlag = 0;
 
@@ -1429,7 +1448,7 @@ int okToCharge(void){
     }
     else if (battType == INVNTS_VIRT_BATT){
       if ((BMSchargeCurrSetpoint > 0)|| (InvntsHeaterStat==1)){ //BMSchargeCurrSetpoint > 0
-        BMSchargeVoltSetpoint = 30.4;
+        //BMSchargeVoltSetpoint = 30.4;
       }
     }
     return 2;
@@ -1458,7 +1477,7 @@ int okToCharge(void){
   else if ((BMSrev3CANok() != 1)||(InvntsOldCANok() != 1)||(Invnts60AhCANok() != 1)||(Invnts80AhCANok() != 1)||(InvntsVirtualBattCANok() != 1)){
     return 10;
   }
-  else if (moduleMinTemperature <= CHARGE_MIN_TEMP){
+  else if (moduleMinTemperature < CHARGE_MIN_TEMP){
     return 11;
   }
   else if (moduleMaxTemperature > MODULE_MAX_TEMP){
