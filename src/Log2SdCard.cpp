@@ -584,7 +584,7 @@ void Log2SD(int what2log){
             cumlAmpHrs = cumlAmpHrs + ampHours;
             cumlWattHrs = cumlWattHrs + wattHours;
             // if the file opened okay, write to it:
-            myFile.printf("#BMS,%d,%d,INVNTS_VIRT_BATT,%d,%.3f,%.1f,%d,%d,%.2f,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%.1f,%.1f,%d,%.1f,%.1f,%d,%d\n"
+            myFile.printf("#BMS,%d,%d,INVNTS_VIRT_BATT,%d,%.3f,%.1f,%.1f,%.1f,%.0f,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%.1f,%.1f,%d,%.1f,%.1f,%d,%d\n"
             ,Time.now(),interval,BMSstatusWord,fCombinedModuleVolts,battCurrent,moduleMinTemperature,moduleMaxTemperature,moduleSOCscale,battCell1mv,battCell2mv,battCell3mv,battCell4mv,battCell5mv,battCell6mv,battCell7mv,battCell8mv,ampHours,cumlAmpHrs,wattHours,cumlWattHrs,maxDischargeCurrent,maxRegenCurrent,battSN,BMSchargeCurrSetpoint,BMSchargeVoltSetpoint,InvntsSOH,InvntsHeaterStat);
             ampHours = 0;
             wattHours = 0;

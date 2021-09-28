@@ -110,7 +110,7 @@ int SparkNetOk = 0;
 
 unsigned long lastTime;
 unsigned int testSubCycleCount = 0;
-unsigned int testCycleCount = 0;
+unsigned long testCycleCount = 0;
 
 int testType = CYCLE;
 int dischargerType = LIST;

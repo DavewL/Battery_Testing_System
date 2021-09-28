@@ -56,6 +56,8 @@ String heaterStatus2String;
 String cellsDeltaV2String;
 String cellMinVoltsString;
 String cellMaxVoltsString;
+String cycleCountString;
+String subCycleCountString;
 
 float maxSurfTempReturned = -99;
 
@@ -105,6 +107,7 @@ void initCycleTest(void){
   
   Particle.variable("OkToCharge", ok2ChargeStatus);
   Particle.variable("okToDischarge", ok2DischargeStatus);
+  Particle.variable("CycleCount", testCycleCount);
   Particle.variable("HeaterState", heaterState2String);
   Particle.variable("HeaterStatus", heaterStatus2String);
   Particle.variable("StateMachine", testState2String);
@@ -162,8 +165,12 @@ void CycleTest(void){
   battSOC2String = String::format("%.2f", moduleSOCscale);
   battVolt2String = String::format("%.3f", battVoltage);
   battCurr2String = String::format("%.1f", battCurrent);
+  cycleCountString = String::format("%d", testCycleCount);
+  subCycleCountString = String::format("%d", testSubCycleCount);
 
   float DQcurrentSetpoint = 0;
+
+  int tempOk2Discharge = 0;
 
   char Invnts_ATSAMfirmwareLetterRev_char = 0; 
   char Invnts_ATSAMfirmwareMajorRev_char = 0;
@@ -577,7 +584,7 @@ void CycleTest(void){
         }
       }
       else if (battType == INVNTS_VIRT_BATT){
-        if ((moduleSOCscale >= maxChargePercent)||(okToCharge() == 6)){
+        if ((moduleSOCscale >= 100)||(okToCharge() == 6)){
           testState = statePOWERRESETCHRGOFF;
         }
         else if (okToCharge() == 1){
@@ -684,9 +691,10 @@ void CycleTest(void){
       }
       else if(battType == INVNTS_VIRT_BATT){
         //Serial.println(okToDischarge());
-        
-        if (okToDischarge() != 1){
+        //tempOk2DischargeStatus = okToDischarge();
 
+        if (okToDischarge() != 1){
+          Particle.publish("OK_2_Discharge_Val", ok2DischargeStatus, PRIVATE);
           testState = stateDISCHARGE_INPUTOFF;
         }
       }

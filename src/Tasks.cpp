@@ -28,6 +28,9 @@ extern String battCurr2String;
 extern String battVolt2String;
 extern String battMaxTemp2String;
 extern String battSOC2String;
+extern String cycleCountString;
+extern String subCycleCountString;
+
 //int lastTime = millis();
  
 void TasksInit(){
@@ -100,12 +103,14 @@ void Tasks40ms(){
       dispBatterySOC();
       if (intervalCounter == 1){
         //Particle.publish("current", battCurr2String, PRIVATE);
+        Particle.publish("Test_Cycle_Count", cycleCountString, PRIVATE);
       }
       else if (intervalCounter == 2){
         //Particle.publish("voltage", battVolt2String, PRIVATE);
+        Particle.publish("PH_Cycle_Count", subCycleCountString, PRIVATE);
       }
       else if (intervalCounter == 3){
-        //Particle.publish("temperature", battMaxTemp2String, PRIVATE);
+        Particle.publish("temperature", battMaxTemp2String, PRIVATE);
       }
       else if (intervalCounter == 4){
         Particle.publish("SOC", battSOC2String, PRIVATE);

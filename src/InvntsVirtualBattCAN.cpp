@@ -120,6 +120,10 @@ void recInvntsVirtualBattStatus(CANMessage message){
       
       moduleMinMvolts = (float)((uint16_t)((message.data[3]<<8)|(message.data[2]<<0)))*0.001; //cell min voltage
       moduleMaxMvolts = (float)((uint16_t)((message.data[5]<<8)|(message.data[4]<<0)))*0.001; //cell max voltage
+      
+      battCell1mv = (int)(moduleMinMvolts*1000);
+      battCell2mv = (int)(moduleMaxMvolts*1000);
+
   }
   else if (message.id == INVNTS_TPDO6_ID){
       ResetInvntsTimer(CT_INVNTS_VIRT_BATT_LOST_DELAY);

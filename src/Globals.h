@@ -88,7 +88,7 @@ extern int myFileOk;
 extern int SparkNetOk;
 
 extern unsigned int testSubCycleCount;
-extern unsigned int testCycleCount;
+extern unsigned long testCycleCount;
 
 extern int testType;
 extern int dischargerType;
