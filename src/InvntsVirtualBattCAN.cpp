@@ -60,21 +60,10 @@ void recInvntsVirtualBattStatus(CANMessage message){
     nowMillis = millis();
 
     InvntsSOH = (int)message.data[0];   
-    
+
     //Serial.println(BMSchargeCurrSetpoint);
    
-    if (message.data[2] == 5){
-      BMSstatus = DISCHARGE;
-    }
-    else if (message.data[4] == 6){
-      BMSstatus = CHARGE;
-    }
-    else if (message.data[4] == 7){
-      BMSstatus = CHARGE;
-    }
-    else if (message.data[4] == 4){
-      BMSstatus = STANDBY;
-    }
+    BMSstatusWord = message.data[3];
 
     InvntsCANRec = 1;
     /* -- charge faults ------------------------------------------------*/

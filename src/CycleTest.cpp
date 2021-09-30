@@ -16,14 +16,14 @@
 
 static const unsigned int scawCycleTestTimers[NUM_CYCLE_TIMERS] =
 {
-  /* CT_KEY_RESTART_DELAY   */   2000,  //ms -TIME TO KEEP THE IGNITION SIGNAL off
-  /* CT_KEY_WAKE            */   9000,  //ms -TIME TO WAIT AFTER KEY ON SIGNAL
-  /* CT_EL_LOAD_CMD_DELAY   */   200,   //ms -TIME TO WAIT BETWEEN COMMANDS TO THE EL. LOAD
-  /* CT_MAIN_CNTCTR_DELAY   */   2000,  //ms -TIME LAG OF MAIN CONTACTOR STATE REPORTING ON CANBUS
-  /* CT_RECHARGE_DELAY      */   8000,  //ms -MAX TIME TO WAIT AFTER POWERING ON CHARGER -CUMMINS ONLY
-  /* CT_CUMMINS_CHRG_DELAY  */   6000,  //ms -MIN TIME TO WAIT AFTER POWERING ON CHARGER -CUMMINS ONLY -MUST BE SHORTER THAN CT_RECHARGE_DELAY
-  /* CT_LOG_INTERVAL        */   4000,  //ms -TIME TO WAIT BETWEEN COMMANDS TO THE EL. LOAD
-  /* CT_INVNTS_CHRG_DELAY   */   1000   //ms - MIN TIME TO WAIT AFTER POWERING ON CHARGER -INVNTS ONLY -MUST BE SHORTER THAN CT_RECHARGE_DELAY
+  /* CT_KEY_RESTART_DELAY     */   2000,  //ms -TIME TO KEEP THE IGNITION SIGNAL off
+  /* CT_KEY_WAKE              */   9000,  //ms -TIME TO WAIT AFTER KEY ON SIGNAL
+  /* CT_EL_LOAD_CMD_DELAY     */   200,   //ms -TIME TO WAIT BETWEEN COMMANDS TO THE EL. LOAD
+  /* CT_MAIN_CNTCTR_DELAY     */   2000,  //ms -TIME LAG OF MAIN CONTACTOR STATE REPORTING ON CANBUS
+  /* CT_RECHARGE_DELAY        */   8000,  //ms -MAX TIME TO WAIT AFTER POWERING ON CHARGER -CUMMINS ONLY
+  /* CT_CUMMINS_CHRG_DELAY    */   6000,  //ms -MIN TIME TO WAIT AFTER POWERING ON CHARGER -CUMMINS ONLY -MUST BE SHORTER THAN CT_RECHARGE_DELAY
+  /* CT_LOG_INTERVAL          */   4000,  //ms -TIME TO WAIT BETWEEN COMMANDS TO THE EL. LOAD
+  /* CT_INVNTS_DISCHRG_DELAY  */   1000   //ms -TIME TO WAIT BEFORE ASSUMING DISCHARGE LIMIT IS ACTUALLY ZERO
 };
 
 stateTestControl testState;
@@ -181,6 +181,8 @@ void CycleTest(void){
   char Invnts_BQ80firmwareMajorRev_char = 0;
   char Invnts_BQ80firmwareMinorRev_char = 0;
   String Invnts_BQ80firmwareRev = "#BQ80 Version,";
+
+  String BMSstatusString = "";
 
   maxSurfTempReturned = maxCSMSurfaceTemp();
 
@@ -693,9 +695,22 @@ void CycleTest(void){
         //Serial.println(okToDischarge());
         //tempOk2DischargeStatus = okToDischarge();
 
+        BMSstatusString = String::format("%d", BMSstatusWord);
+        
         if (okToDischarge() != 1){
           Particle.publish("OK_2_Discharge_Val", ok2DischargeStatus, PRIVATE);
-          testState = stateDISCHARGE_INPUTOFF;
+          Particle.publish("BMS_Status", BMSstatusString, PRIVATE);
+          if(okToDischarge() == 15){
+            if (TimerExpired(&scastCycleTimers[CT_INVNTS_DISCHRG_DELAY])){
+              testState = stateDISCHARGE_INPUTOFF;
+            }
+          }
+          else{
+            testState = stateDISCHARGE_INPUTOFF;
+          }
+        }
+        else {
+          ResetCycleTimer(CT_INVNTS_DISCHRG_DELAY);
         }
       }
       break;

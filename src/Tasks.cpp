@@ -24,6 +24,8 @@ int TwoSecCounter = 0;
 int FiveSecCounter = 0;
 int FifteenSecCounter = 0;
 
+String BMSstatusString = "";
+
 extern String battCurr2String;
 extern String battVolt2String;
 extern String battMaxTemp2String;
@@ -108,6 +110,8 @@ void Tasks40ms(){
       else if (intervalCounter == 2){
         //Particle.publish("voltage", battVolt2String, PRIVATE);
         Particle.publish("PH_Cycle_Count", subCycleCountString, PRIVATE);
+        BMSstatusString = String::format("%d", BMSstatusWord);
+        Particle.publish("BMS_Status", BMSstatusString, PRIVATE);
       }
       else if (intervalCounter == 3){
         Particle.publish("temperature", battMaxTemp2String, PRIVATE);
