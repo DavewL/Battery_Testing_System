@@ -110,13 +110,15 @@ void Tasks40ms(){
       else if (intervalCounter == 2){
         //Particle.publish("voltage", battVolt2String, PRIVATE);
         Particle.publish("PH_Cycle_Count", subCycleCountString, PRIVATE);
-        BMSstatusString = String::format("%d", BMSstatusWord);
-        Particle.publish("BMS_Status", BMSstatusString, PRIVATE);
       }
       else if (intervalCounter == 3){
         Particle.publish("temperature", battMaxTemp2String, PRIVATE);
       }
       else if (intervalCounter == 4){
+        BMSstatusString = String::format("%d", BMSstatusWord);
+        Particle.publish("BMS_Status", BMSstatusString, PRIVATE);
+      }
+      else if (intervalCounter == 5){
         Particle.publish("SOC", battSOC2String, PRIVATE);
         intervalCounter = 0;
       }

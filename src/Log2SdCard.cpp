@@ -452,9 +452,12 @@ void openReadWriteFiles(int what2log){
 void LogUserString(String logString)
 {
   String tempString = "#USER_STRING,";
+  String tempTime = String::format("%d,",Time.now());
+
   if (SDcardInitOK){
       if (myFile.open(strFileName, O_RDWR | O_CREAT | O_APPEND)){
           // if the file opened okay, write to it:
+          tempString.concat(tempTime);
           tempString.concat(logString);
           myFile.println(tempString);
           // close the file:
