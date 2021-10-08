@@ -84,7 +84,7 @@ void manageSDLogging(void);
 
 int fElLoadString(String command){
   Serial1.println(command);
-  Serial.println(command);
+  //Serial.println(command);
   return 1;
 }
 
@@ -218,7 +218,7 @@ void CycleTest(void){
     }                                                         //--
     //------------------------------------------------------------
   }
-  Serial.println(testState2String);
+  //Serial.println(testState2String);
   switch (testState)
   {
     case stateINIT:             //0
@@ -484,8 +484,8 @@ void CycleTest(void){
             LogUserString(Invnts_ATSAMfirmwareRev);
             LogUserString(Invnts_BQ80firmwareRev);
 
-            Particle.publish("ATSAM", Invnts_ATSAMfirmwareRev, PRIVATE);
-            Particle.publish("BQ80", Invnts_BQ80firmwareRev, PRIVATE);
+            //Particle.publish("ATSAM", Invnts_ATSAMfirmwareRev, PRIVATE);
+            //Particle.publish("BQ80", Invnts_BQ80firmwareRev, PRIVATE);
 
           }
           else{
@@ -698,8 +698,8 @@ void CycleTest(void){
         BMSstatusString = String::format("%d", BMSstatusWord);
         
         if (okToDischarge() != 1){
-          Particle.publish("OK_2_Discharge_Val", ok2DischargeStatus, PRIVATE);
-          Particle.publish("BMS_Status", BMSstatusString, PRIVATE);
+          //Particle.publish("OK_2_Discharge_Val", ok2DischargeStatus, PRIVATE);
+          //Particle.publish("BMS_Status", BMSstatusString, PRIVATE);
           if(okToDischarge() == 15){
             if (TimerExpired(&scastCycleTimers[CT_INVNTS_DISCHRG_DELAY])){
               testState = stateDISCHARGE_INPUTOFF;

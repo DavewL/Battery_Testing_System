@@ -104,11 +104,9 @@ void Tasks40ms(){
       //put 15 Second tasks here
       dispBatterySOC();
       if (intervalCounter == 1){
-        //Particle.publish("current", battCurr2String, PRIVATE);
         Particle.publish("Test_Cycle_Count", cycleCountString, PRIVATE);
       }
       else if (intervalCounter == 2){
-        //Particle.publish("voltage", battVolt2String, PRIVATE);
         Particle.publish("PH_Cycle_Count", subCycleCountString, PRIVATE);
       }
       else if (intervalCounter == 3){
